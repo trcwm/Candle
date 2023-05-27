@@ -11,7 +11,6 @@
 #include <QBasicTimer>
 #include <QStringList>
 #include <QList>
-//#include <QTime>
 #include <QElapsedTimer>
 #include <QMenu>
 #include <QDragEnterEvent>
