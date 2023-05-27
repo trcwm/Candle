@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -msse3")
 if(APPLE)
     add_compile_definitions(Q_OS_MAC)
 endif()
-add_compile_definitions(APP_VERSION="1.1.9")
+add_compile_definitions(APP_VERSION="1.1.10")
 add_compile_definitions(QT_NO_DEBUG)
 
 find_package(Qt5 COMPONENTS Core Widgets OpenGL SerialPort REQUIRED)
