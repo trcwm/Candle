@@ -36,7 +36,7 @@ public:
     void reset(const QVector3D &initialPoint = QVector3D(qQNaN(), qQNaN(), qQNaN()));
     PointSegment *addCommand(QString command);
     PointSegment *addCommand(const QStringList &args);
-    QVector3D* getCurrentPoint();
+    QVector3D *getCurrentPoint();
     QList<PointSegment *> expandArc();
     QStringList preprocessCommands(QStringList commands);
     QStringList preprocessCommand(QString command);
@@ -51,7 +51,6 @@ signals:
 public slots:
 
 private:
-
     // Current state
     bool m_isMetric;
     bool m_inAbsoluteMode;
@@ -75,7 +74,7 @@ private:
     double m_lastSpindleSpeed;
 
     // The gcode.
-    QList<PointSegment*> m_points;
+    QList<PointSegment *> m_points;
 
     PointSegment *processCommand(const QStringList &args);
     void handleMCode(float code, const QStringList &args);
