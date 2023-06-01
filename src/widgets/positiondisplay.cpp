@@ -26,7 +26,6 @@ void PositionDisplay::create()
     m_y      = new QLabel("");
     m_z      = new QLabel("");
 
-    //m_x->setStyleSheet("background-color: rgb(5, 30, 5); border-style: solid; border-color: rgb(100," + QString::number(value) + ",100); border-width: 2px; border-radius: 20px;");
     m_x->setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
     m_y->setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
     m_z->setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
@@ -48,9 +47,9 @@ void PositionDisplay::create()
 void PositionDisplay::setPosition(const QVector3D &pos)
 {
     m_pos = pos;
-    m_x->setText(QString::asprintf("%06.2f mm", pos.x()));
-    m_y->setText(QString::asprintf("%06.2f mm", pos.y()));
-    m_z->setText(QString::asprintf("%06.2f mm", pos.z()));
+    m_x->setText(QString::asprintf("X %06.2f", pos.x()));
+    m_y->setText(QString::asprintf("Y %06.2f", pos.y()));
+    m_z->setText(QString::asprintf("Z %06.2f", pos.z()));
 }
 
 void PositionDisplay::setPosition(float x, float y, float z)
