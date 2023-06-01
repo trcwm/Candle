@@ -36,6 +36,7 @@
 
 #include "widgets/styledtoolbutton.h"
 #include "widgets/sliderbox.h"
+#include "widgets/positiondisplay.h"
 
 #include "frmsettings.h"
 #include "frmabout.h"
@@ -236,6 +237,9 @@ private:
     frmSettings *m_settings;
     frmAbout m_frmAbout;
 
+    GUI::PositionDisplay *m_workDisplay    = nullptr;
+    GUI::PositionDisplay *m_machineDisplay = nullptr;
+
     QString m_settingsFileName;
     QString m_programFileName;
     QString m_heightMapFileName;
@@ -352,7 +356,8 @@ private:
     void updateRecentFilesMenu();
     void addRecentFile(QString fileName);
     void addRecentHeightmap(QString fileName);
-    double toMetric(double value);
+    double toMetric(double value) const;
+    QVector3D toMetric(const QVector3D &value) const;
 
     QRectF borderRectFromTextboxes();
     QRectF borderRectFromExtremes();

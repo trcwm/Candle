@@ -33,6 +33,8 @@
 #include <QLayout>
 #include <QMimeData>
 #include <QElapsedTimer>
+
+#include "widgets/positiondisplay.h"
 #include "frmmain.h"
 #include "ui_frmmain.h"
 
@@ -287,6 +289,15 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     {
         loadFile(qApp->arguments().last());
     }
+
+    auto *displayBoxLayout = new QHBoxLayout();
+    m_machineDisplay = new GUI::PositionDisplay("Machine");
+    m_workDisplay = new GUI::PositionDisplay("Work");
+
+    displayBoxLayout->addWidget(m_workDisplay);
+    displayBoxLayout->addWidget(m_machineDisplay);
+
+    ui->verticalLayout_2->addLayout(displayBoxLayout);
 }
 
 frmMain::~frmMain()
@@ -891,9 +902,9 @@ void frmMain::onSerialPortReadyRead()
             static QRegExp mpx("MPos:([^,]*),([^,]*),([^,^>^|]*)");
             if (mpx.indexIn(data) != -1)
             {
-                ui->txtMPosX->setText(mpx.cap(1));
-                ui->txtMPosY->setText(mpx.cap(2));
-                ui->txtMPosZ->setText(mpx.cap(3));
+                m_machineDisplay->setPosition(mpx.cap(1).toFloat(), 
+                    mpx.cap(2).toFloat(),
+                    mpx.cap(3).toFloat());
             }
 
             // Status
@@ -1009,9 +1020,10 @@ void frmMain::onSerialPortReadyRead()
                         }
                         else
                         {
-                            x = ui->txtMPosX->text().toDouble();
-                            y = ui->txtMPosY->text().toDouble();
-                            z = ui->txtMPosZ->text().toDouble();
+                            auto mpos = m_machineDisplay->getPosition();
+                            x = mpos.x();
+                            y = mpos.y();
+                            z = mpos.z();
                         }
                         break;
                     }
@@ -1029,17 +1041,15 @@ void frmMain::onSerialPortReadyRead()
 
             // Update work coordinates
             int prec = m_settings->units() == 0 ? 3 : 4;
-            ui->txtWPosX->setText(QString::number(ui->txtMPosX->text().toDouble() - workOffset.x(), 'f', prec));
-            ui->txtWPosY->setText(QString::number(ui->txtMPosY->text().toDouble() - workOffset.y(), 'f', prec));
-            ui->txtWPosZ->setText(QString::number(ui->txtMPosZ->text().toDouble() - workOffset.z(), 'f', prec));
+            
+            auto mpos = m_machineDisplay->getPosition();
+            m_workDisplay->setPosition(mpos - workOffset);
 
             // Update tool position
             QVector3D toolPosition;
             if (!(status == CHECK && m_fileProcessedCommandIndex < m_currentModel->rowCount() - 1))
             {
-                toolPosition = QVector3D(toMetric(ui->txtWPosX->text().toDouble()),
-                                         toMetric(ui->txtWPosY->text().toDouble()),
-                                         toMetric(ui->txtWPosZ->text().toDouble()));
+                toolPosition = toMetric(m_workDisplay->getPosition());
                 m_toolDrawer.setToolPosition(m_codeDrawer->getIgnoreZ() ? QVector3D(toolPosition.x(), toolPosition.y(), 0) : toolPosition);
             }
 
@@ -2199,8 +2209,11 @@ void frmMain::storeOffsets()
 void frmMain::restoreOffsets()
 {
     // Still have pre-reset working position
-    sendCommand(QString("G21G53G90X%1Y%2Z%3").arg(toMetric(ui->txtMPosX->text().toDouble())).arg(toMetric(ui->txtMPosY->text().toDouble())).arg(toMetric(ui->txtMPosZ->text().toDouble())), -1, m_settings->showUICommands());
-    sendCommand(QString("G21G92X%1Y%2Z%3").arg(toMetric(ui->txtWPosX->text().toDouble())).arg(toMetric(ui->txtWPosY->text().toDouble())).arg(toMetric(ui->txtWPosZ->text().toDouble())), -1, m_settings->showUICommands());
+    auto mpos = toMetric(m_machineDisplay->getPosition());
+    auto wpos = toMetric(m_workDisplay->getPosition());
+
+    sendCommand(QString("G21G53G90X%1Y%2Z%3").arg(mpos.x()).arg(mpos.y()).arg(mpos.z()), -1, m_settings->showUICommands());
+    sendCommand(QString("G21G92X%1Y%2Z%3").arg(wpos.x()).arg(wpos.y()).arg(wpos.z()), -1, m_settings->showUICommands());
 }
 
 void frmMain::sendNextFileCommands()
@@ -2628,8 +2641,11 @@ void frmMain::on_cmdRestoreOrigin_clicked()
 {
     // Restore offset
     sendCommand(QString("G21"), -1, m_settings->showUICommands());
-    sendCommand(QString("G53G90G0X%1Y%2Z%3").arg(toMetric(ui->txtMPosX->text().toDouble())).arg(toMetric(ui->txtMPosY->text().toDouble())).arg(toMetric(ui->txtMPosZ->text().toDouble())), -1, m_settings->showUICommands());
-    sendCommand(QString("G92X%1Y%2Z%3").arg(toMetric(ui->txtMPosX->text().toDouble()) - m_storedX).arg(toMetric(ui->txtMPosY->text().toDouble()) - m_storedY).arg(toMetric(ui->txtMPosZ->text().toDouble()) - m_storedZ), -1, m_settings->showUICommands());
+    
+    auto mpos = toMetric(m_machineDisplay->getPosition());
+    auto wpos = toMetric(m_workDisplay->getPosition());
+    sendCommand(QString("G53G90G0X%1Y%2Z%3").arg(mpos.x()).arg(mpos.y()).arg(mpos.z()), -1, m_settings->showUICommands());
+    sendCommand(QString("G92X%1Y%2Z%3").arg(wpos.x() - m_storedX).arg(wpos.y() - m_storedY).arg(wpos.z() - m_storedZ), -1, m_settings->showUICommands());
 
     // Move tool
     if (m_settings->moveOnRestore())
@@ -3417,9 +3433,16 @@ void frmMain::on_actRecentClear_triggered()
     updateRecentFilesMenu();
 }
 
-double frmMain::toMetric(double value)
+double frmMain::toMetric(double value) const
 {
     return m_settings->units() == 0 ? value : value * 25.4;
+}
+
+QVector3D frmMain::toMetric(const QVector3D &value) const
+{
+    return QVector3D(toMetric(value.x()), 
+        toMetric(value.y()), 
+        toMetric(value.z()));
 }
 
 void frmMain::on_grpHeightMap_toggled(bool arg1)
@@ -4271,7 +4294,7 @@ void frmMain::on_cmdHeightMapBorderAuto_clicked()
 
 bool frmMain::compareCoordinates(double x, double y, double z)
 {
-    return ui->txtMPosX->text().toDouble() == x && ui->txtMPosY->text().toDouble() == y && ui->txtMPosZ->text().toDouble() == z;
+    return m_machineDisplay->getPosition() == QVector3D(x,y,z);
 }
 
 void frmMain::onCmdUserClicked(bool checked)
