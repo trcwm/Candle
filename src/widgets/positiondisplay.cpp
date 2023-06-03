@@ -17,6 +17,8 @@ PositionDisplay::PositionDisplay(QWidget *parent) : QWidget(parent)
 
 void PositionDisplay::create()
 {
+    setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
+
     QFont font("Monospace");
     font.setStyleHint(QFont::Monospace);
 

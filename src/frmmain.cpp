@@ -649,7 +649,6 @@ void frmMain::updateControlsState()
 {
     bool portOpened = m_serialPort.isOpen();
 
-    ui->grpState->setEnabled(portOpened);
     ui->grpControl->setEnabled(portOpened);
     ui->widgetUserCommands->setEnabled(portOpened && !m_processingFile);
     ui->widgetSpindle->setEnabled(portOpened);
@@ -685,8 +684,9 @@ void frmMain::updateControlsState()
 
     if (!portOpened)
     {
-        ui->txtStatus->setText(tr("Not connected"));
-        ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
+        //FIXME:
+        //ui->txtStatus->setText(tr("Not connected"));
+        //ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
     }
 
     this->setWindowTitle(m_programFileName.isEmpty() ? qApp->applicationDisplayName()
@@ -756,8 +756,9 @@ void frmMain::openPort()
 {
     if (m_serialPort.open(QIODevice::ReadWrite))
     {
-        ui->txtStatus->setText(tr("Port opened"));
-        ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
+        //FIXME: add connected to status bar
+        //ui->txtStatus->setText(tr("Port opened"));
+        //ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
         //        updateControlsState();
         grblReset();
     }
@@ -920,10 +921,11 @@ void frmMain::onSerialPortReadyRead()
                 // Update status
                 if (status != m_lastGrblStatus)
                 {
-                    ui->txtStatus->setText(m_statusCaptions[status]);
-                    ui->txtStatus->setStyleSheet(QString("background-color: %1; color: %2;")
-                                                     .arg(m_statusBackColors[status])
-                                                     .arg(m_statusForeColors[status]));
+                    //FIXME: update status bar
+                    //ui->txtStatus->setText(m_statusCaptions[status]);
+                    //ui->txtStatus->setStyleSheet(QString("background-color: %1; color: %2;")
+                    //                                 .arg(m_statusBackColors[status])
+                    //                                 .arg(m_statusForeColors[status]));
                 }
 
                 // Update controls
@@ -1412,6 +1414,8 @@ void frmMain::onSerialPortReadyRead()
                     if (ca.command.contains("M30"))
                         ui->tblProgram->setCurrentIndex(m_currentModel->index(0, 1));
 
+                    // FIXME:
+#if 0
                     // Toolpath shadowing on check mode
                     if (m_statusCaptions.indexOf(ui->txtStatus->text()) == CHECK)
                     {
@@ -1454,6 +1458,8 @@ void frmMain::onSerialPortReadyRead()
                             }
                         }
                     }
+
+#endif
 
                     response.clear();
                 }
