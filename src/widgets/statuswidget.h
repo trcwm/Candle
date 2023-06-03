@@ -26,7 +26,9 @@ public:
         QUEUE,
         CHECK,
         DOOR,
-        JOG
+        JOG,
+        NOTCONNECTED,
+        PORTOPEN
     };
 
     static StatusType statusFromString(const QString &statusStr);

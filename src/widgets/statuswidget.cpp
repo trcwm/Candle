@@ -8,8 +8,7 @@ void StatusWidget::create()
     m_layout = new QHBoxLayout();
 
     m_name = new QLabel("Status");
-    m_statusTxt = new QLabel("XXXXXXXXXX");
-
+    m_statusTxt = new QLabel("XXXXXXXXXXXXXXX");
     m_layout->addWidget(m_name);
     m_layout->addWidget(m_statusTxt);
 
@@ -39,7 +38,7 @@ StatusWidget::StatusType StatusWidget::statusFromString(const QString &statusStr
         "Queue",
         "Check",
         "Door", // TODO: Update "Door" state
-        "Jog"       
+        "Jog"    
     };
 
     StatusType status{StatusType::UNKNOWN};
@@ -103,6 +102,14 @@ void StatusWidget::setStatus(StatusType st)
         m_statusTxt->setText("DOOR");
         setColors("lime", "black");
         break;                   
+    case StatusType::NOTCONNECTED:
+        m_statusTxt->setText("NOT CONNECTED");
+        setColors("palette(button)", "palette(text)");
+        break;  
+    case StatusType::PORTOPEN:
+        m_statusTxt->setText("PORT OPEN");
+        setColors("palette(button)", "palette(text)");
+        break;
     }
 }
 

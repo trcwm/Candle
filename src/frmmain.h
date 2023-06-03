@@ -254,7 +254,7 @@ private:
     QTimer m_timerStateQuery;
     QBasicTimer m_timerToolAnimation;
 
-    QStringList m_status;
+    //QStringList m_status;
     //QStringList m_statusCaptions;
     //QStringList m_statusBackColors;
     //QStringList m_statusForeColors;

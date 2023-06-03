@@ -2,5 +2,5 @@
 
 mkdir build
 cd build
-cmake -GNinja ../src
+cmake -GNinja ../src -DCMAKE_BUILD_TYPE=Debug
 

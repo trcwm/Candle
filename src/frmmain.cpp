@@ -1,22 +1,9 @@
 // This file is a part of "Candle" application.
 // Copyright 2015-2016 Hayrullin Denis Ravilevich
+// Copyright 2023 Niels Moseley
 
 // #define INITTIME //QTime time; time.start();
 // #define PRINTTIME(x) //qDebug() << "time elapse" << QString("%1:").arg(x) << time.elapsed(); time.start();
-
-#if 0
-#define UNKNOWN 0
-#define IDLE 1
-#define ALARM 2
-#define RUN 3
-#define HOME 4
-#define HOLD0 5
-#define HOLD1 6
-#define QUEUE 7
-#define CHECK 8
-#define DOOR 9
-#define JOG 10
-#endif
 
 #define PROGRESSMINLINES 10000
 #define PROGRESSSTEP 1000
@@ -43,7 +30,6 @@
 frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
                                     ui(new Ui::frmMain)
 {
-
     // Loading settings
     m_settingsFileName = qApp->applicationDirPath() + "/settings.ini";
     preloadSettings();
@@ -103,7 +89,7 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 
     connect(ui->cboCommand, SIGNAL(returnPressed()), this, SLOT(onCboCommandReturnPressed()));
 
-    foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
+    foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
         connect(button, SIGNAL(clicked(bool)), this, SLOT(onCmdUserClicked(bool)));
     }
@@ -192,6 +178,10 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
                                        QMessageBox::Ignore | QMessageBox::Abort, this);
     m_senderErrorBox->setCheckBox(new QCheckBox(tr("Don't show again")));
 
+    // create the status widget before loadSettings 
+    // to avoid nullptr dereference..
+    m_statusWidget = new GUI::StatusWidget();
+
     // Loading settings
     loadSettings();
     ui->tblProgram->hideColumn(4);
@@ -199,7 +189,7 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     updateControlsState();
 
     // Prepare jog buttons
-    foreach (StyledToolButton *button, ui->grpJog->findChildren<StyledToolButton *>(QRegExp("cmdJogFeed\\d")))
+    foreach (StyledToolButton *button, ui->grpJog->findChildren<StyledToolButton *>(QRegularExpression("cmdJogFeed\\d")))
     {
         connect(button, SIGNAL(clicked(bool)), this, SLOT(onCmdJogFeedClicked()));
     }
@@ -250,8 +240,7 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 
     auto *displayBoxLayout = new QHBoxLayout();
     m_machineDisplay = new GUI::PositionDisplay("Machine");
-    m_workDisplay = new GUI::PositionDisplay("Work");
-    m_statusWidget = new GUI::StatusWidget();
+    m_workDisplay = new GUI::PositionDisplay("Work");    
 
     displayBoxLayout->addWidget(m_workDisplay);
     displayBoxLayout->addWidget(m_machineDisplay);
@@ -399,7 +388,7 @@ void frmMain::loadSettings()
     m_settings->setTouchCommand(set.value("touchCommand").toString());
     m_settings->setSafePositionCommand(set.value("safePositionCommand").toString());
 
-    foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
+    foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
         int i = button->objectName().right(1).toInt();
         m_settings->setUserCommands(i, set.value(QString("userCommands%1").arg(i)).toString());
@@ -532,7 +521,7 @@ void frmMain::saveSettings()
     set.setValue("spindleOverride", ui->slbSpindleOverride->isChecked());
     set.setValue("spindleOverrideValue", ui->slbSpindleOverride->value());
 
-    foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
+    foreach (StyledToolButton *button, findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
         int i = button->objectName().right(1).toInt();
         set.setValue(QString("userCommands%1").arg(i), m_settings->userCommands(i));
@@ -644,9 +633,7 @@ void frmMain::updateControlsState()
 
     if (!portOpened)
     {
-        //FIXME:
-        //ui->txtStatus->setText(tr("Not connected"));
-        //ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
+        m_statusWidget->setStatus(StatusType::NOTCONNECTED);
     }
 
     this->setWindowTitle(m_programFileName.isEmpty() ? qApp->applicationDisplayName()
@@ -972,6 +959,8 @@ void frmMain::onSerialPortReadyRead()
                             y = mpos.y();
                             z = mpos.z();
                         }
+                        break;
+                    default:
                         break;
                     }
                 }
@@ -1360,9 +1349,8 @@ void frmMain::onSerialPortReadyRead()
                         ui->tblProgram->setCurrentIndex(m_currentModel->index(0, 1));
 
                     // FIXME:
-#if 0
                     // Toolpath shadowing on check mode
-                    if (m_statusCaptions.indexOf(ui->txtStatus->text()) == CHECK)
+                    if (m_statusWidget->getStatus() == StatusType::CHECK)
                     {
                         GcodeViewParse *parser = m_currentDrawer->viewParser();
                         QList<LineSegment *> list = parser->getLineSegmentList();
@@ -1404,7 +1392,6 @@ void frmMain::onSerialPortReadyRead()
                         }
                     }
 
-#endif
 
                     response.clear();
                 }
@@ -2457,7 +2444,8 @@ void frmMain::applySettings()
     ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
     ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
 
-    foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
+    //foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
+    foreach (StyledToolButton *button, findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
         button->setToolTip(m_settings->userCommands(button->objectName().right(1).toInt()));
         button->setEnabled(!button->toolTip().isEmpty());
