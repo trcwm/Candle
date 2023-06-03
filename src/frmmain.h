@@ -37,6 +37,7 @@
 #include "widgets/styledtoolbutton.h"
 #include "widgets/sliderbox.h"
 #include "widgets/positiondisplay.h"
+#include "widgets/statuswidget.h"
 
 #include "frmsettings.h"
 #include "frmabout.h"
@@ -239,6 +240,7 @@ private:
 
     GUI::PositionDisplay *m_workDisplay    = nullptr;
     GUI::PositionDisplay *m_machineDisplay = nullptr;
+    GUI::StatusWidget    *m_statusWidget   = nullptr;
 
     QString m_settingsFileName;
     QString m_programFileName;
@@ -253,9 +255,9 @@ private:
     QBasicTimer m_timerToolAnimation;
 
     QStringList m_status;
-    QStringList m_statusCaptions;
-    QStringList m_statusBackColors;
-    QStringList m_statusForeColors;
+    //QStringList m_statusCaptions;
+    //QStringList m_statusBackColors;
+    //QStringList m_statusForeColors;
 
 #ifdef WINDOWS
     QWinTaskbarButton *m_taskBarButton;
@@ -305,9 +307,12 @@ private:
     int m_fileProcessedCommandIndex;
     int m_probeIndex;
 
+    using StatusType = typename GUI::StatusWidget::StatusType;
+
     // Current values
     int m_lastDrawnLineIndex;
-    int m_lastGrblStatus;
+    //StatusType m_lastGrblStatus{StatusType::UNKNOWN};
+
     double m_originalFeed;
 
     // Keyboard

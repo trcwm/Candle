@@ -4,6 +4,7 @@
 // #define INITTIME //QTime time; time.start();
 // #define PRINTTIME(x) //qDebug() << "time elapse" << QString("%1:").arg(x) << time.elapsed(); time.start();
 
+#if 0
 #define UNKNOWN 0
 #define IDLE 1
 #define ALARM 2
@@ -15,6 +16,7 @@
 #define CHECK 8
 #define DOOR 9
 #define JOG 10
+#endif
 
 #define PROGRESSMINLINES 10000
 #define PROGRESSSTEP 1000
@@ -41,50 +43,6 @@
 frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
                                     ui(new Ui::frmMain)
 {
-    m_status << "Unknown"
-             << "Idle"
-             << "Alarm"
-             << "Run"
-             << "Home"
-             << "Hold:0"
-             << "Hold:1"
-             << "Queue"
-             << "Check"
-             << "Door" // TODO: Update "Door" state
-             << "Jog";
-    m_statusCaptions << tr("Unknown")
-                     << tr("Idle")
-                     << tr("Alarm")
-                     << tr("Run")
-                     << tr("Home")
-                     << tr("Hold")
-                     << tr("Hold")
-                     << tr("Queue")
-                     << tr("Check")
-                     << tr("Door")
-                     << tr("Jog");
-    m_statusBackColors << "red"
-                       << "palette(button)"
-                       << "red"
-                       << "lime"
-                       << "lime"
-                       << "yellow"
-                       << "yellow"
-                       << "yellow"
-                       << "palette(button)"
-                       << "red"
-                       << "lime";
-    m_statusForeColors << "white"
-                       << "palette(text)"
-                       << "white"
-                       << "black"
-                       << "black"
-                       << "black"
-                       << "black"
-                       << "black"
-                       << "palette(text)"
-                       << "white"
-                       << "black";
 
     // Loading settings
     m_settingsFileName = qApp->applicationDirPath() + "/settings.ini";
@@ -293,9 +251,11 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     auto *displayBoxLayout = new QHBoxLayout();
     m_machineDisplay = new GUI::PositionDisplay("Machine");
     m_workDisplay = new GUI::PositionDisplay("Work");
+    m_statusWidget = new GUI::StatusWidget();
 
     displayBoxLayout->addWidget(m_workDisplay);
     displayBoxLayout->addWidget(m_machineDisplay);
+    displayBoxLayout->addWidget(m_statusWidget);
 
     ui->verticalLayout_2->addLayout(displayBoxLayout);
 }
@@ -841,7 +801,7 @@ void frmMain::grblReset()
     m_homing = false;
     m_resetCompleted = false;
     m_updateSpindleSpeed = true;
-    m_lastGrblStatus = -1;
+    m_statusWidget->reset();
     m_statusReceived = true;
 
     // Drop all remaining commands in buffer
@@ -895,7 +855,7 @@ void frmMain::onSerialPortReadyRead()
         // Status response
         if (data[0] == '<')
         {
-            int status = -1;
+            StatusType status = StatusType::UNKNOWN;
 
             m_statusReceived = true;
 
@@ -912,36 +872,25 @@ void frmMain::onSerialPortReadyRead()
             static QRegExp stx("<([^,^>^|]*)");
             if (stx.indexIn(data) != -1)
             {
-                status = m_status.indexOf(stx.cap(1));
-
-                // Undetermined status
-                if (status == -1)
-                    status = 0;
-
-                // Update status
-                if (status != m_lastGrblStatus)
-                {
-                    //FIXME: update status bar
-                    //ui->txtStatus->setText(m_statusCaptions[status]);
-                    //ui->txtStatus->setStyleSheet(QString("background-color: %1; color: %2;")
-                    //                                 .arg(m_statusBackColors[status])
-                    //                                 .arg(m_statusForeColors[status]));
-                }
+                status = GUI::StatusWidget::statusFromString(stx.cap(1));
+                auto prevStatus = m_statusWidget->getStatus();
+                
+                m_statusWidget->setStatus(status);
 
                 // Update controls
-                ui->cmdRestoreOrigin->setEnabled(status == IDLE);
-                ui->cmdSafePosition->setEnabled(status == IDLE);
-                ui->cmdZeroXY->setEnabled(status == IDLE);
-                ui->cmdZeroZ->setEnabled(status == IDLE);
-                ui->chkTestMode->setEnabled(status != RUN && !m_processingFile);
-                ui->chkTestMode->setChecked(status == CHECK);
-                ui->cmdFilePause->setChecked(status == HOLD0 || status == HOLD1 || status == QUEUE);
-                ui->cmdSpindle->setEnabled(!m_processingFile || status == HOLD0);
+                ui->cmdRestoreOrigin->setEnabled(status == StatusType::IDLE);
+                ui->cmdSafePosition->setEnabled(status == StatusType::IDLE);
+                ui->cmdZeroXY->setEnabled(status == StatusType::IDLE);
+                ui->cmdZeroZ->setEnabled(status == StatusType::IDLE);
+                ui->chkTestMode->setEnabled(status != StatusType::RUN && !m_processingFile);
+                ui->chkTestMode->setChecked(status == StatusType::CHECK);
+                ui->cmdFilePause->setChecked(status == StatusType::HOLD0 || status == StatusType::HOLD1 || status == StatusType::QUEUE);
+                ui->cmdSpindle->setEnabled(!m_processingFile || status == StatusType::HOLD0);
 #ifdef WINDOWS
                 if (QSysInfo::windowsVersion() >= QSysInfo::WV_WINDOWS7)
                 {
                     if (m_taskBarProgress)
-                        m_taskBarProgress->setPaused(status == HOLD0 || status == HOLD1 || status == QUEUE);
+                        m_taskBarProgress->setPaused(status == StatusType::HOLD0 || status == StatusType::HOLD1 || status == StatusType::QUEUE);
                 }
 #endif
 
@@ -955,7 +904,7 @@ void frmMain::onSerialPortReadyRead()
 
                 // Test for job complete
                 if (m_processingFile && m_transferCompleted &&
-                    ((status == IDLE && m_lastGrblStatus == RUN) || status == CHECK))
+                    ((status == StatusType::IDLE && prevStatus == StatusType::RUN) || status == StatusType::CHECK))
                 {
                     qDebug() << "job completed:" << m_fileCommandIndex << m_currentModel->rowCount() - 1;
 
@@ -988,10 +937,6 @@ void frmMain::onSerialPortReadyRead()
                     m_timerStateQuery.start();
                 }
 
-                // Store status
-                if (status != m_lastGrblStatus)
-                    m_lastGrblStatus = status;
-
                 // Abort
                 static double x = sNan;
                 static double y = sNan;
@@ -1001,7 +946,7 @@ void frmMain::onSerialPortReadyRead()
                 {
                     switch (status)
                     {
-                    case IDLE: // Idle
+                    case StatusType::IDLE: // Idle
                         if (!m_processingFile && m_resetCompleted)
                         {
                             m_aborting = false;
@@ -1010,9 +955,9 @@ void frmMain::onSerialPortReadyRead()
                             return;
                         }
                         break;
-                    case HOLD0: // Hold
-                    case HOLD1:
-                    case QUEUE:
+                    case StatusType::HOLD0: // Hold
+                    case StatusType::HOLD1:
+                    case StatusType::QUEUE:
                         if (!m_reseting && compareCoordinates(x, y, z))
                         {
                             x = sNan;
@@ -1049,14 +994,14 @@ void frmMain::onSerialPortReadyRead()
 
             // Update tool position
             QVector3D toolPosition;
-            if (!(status == CHECK && m_fileProcessedCommandIndex < m_currentModel->rowCount() - 1))
+            if (!(status == StatusType::CHECK && m_fileProcessedCommandIndex < m_currentModel->rowCount() - 1))
             {
                 toolPosition = toMetric(m_workDisplay->getPosition());
                 m_toolDrawer.setToolPosition(m_codeDrawer->getIgnoreZ() ? QVector3D(toolPosition.x(), toolPosition.y(), 0) : toolPosition);
             }
 
             // toolpath shadowing
-            if (m_processingFile && status != CHECK)
+            if (m_processingFile && status != StatusType::CHECK)
             {
                 GcodeViewParse *parser = m_currentDrawer->viewParser();
 
@@ -1484,7 +1429,7 @@ void frmMain::onSerialPortReadyRead()
 
                     m_reseting = false;
                     m_homing = false;
-                    m_lastGrblStatus = -1;
+                    m_statusWidget->reset();
 
                     m_updateParserStatus = true;
                     m_statusReceived = true;
