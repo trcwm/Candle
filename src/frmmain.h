@@ -38,6 +38,7 @@
 #include "widgets/sliderbox.h"
 #include "widgets/positiondisplay.h"
 #include "widgets/statuswidget.h"
+#include "widgets/consoletab.h"
 
 #include "frmsettings.h"
 #include "frmabout.h"
@@ -241,7 +242,9 @@ private:
     GUI::PositionDisplay *m_workDisplay    = nullptr;
     GUI::PositionDisplay *m_machineDisplay = nullptr;
     GUI::StatusWidget    *m_statusWidget   = nullptr;
-
+    GUI::ConsoleTab      *m_consoleTab     = nullptr;
+    QTabWidget           *m_tabWidget      = nullptr;
+    
     QString m_settingsFileName;
     QString m_programFileName;
     QString m_heightMapFileName;
@@ -253,11 +256,6 @@ private:
     QTimer m_timerConnection;
     QTimer m_timerStateQuery;
     QBasicTimer m_timerToolAnimation;
-
-    //QStringList m_status;
-    //QStringList m_statusCaptions;
-    //QStringList m_statusBackColors;
-    //QStringList m_statusForeColors;
 
 #ifdef WINDOWS
     QWinTaskbarButton *m_taskBarButton;
@@ -311,8 +309,6 @@ private:
 
     // Current values
     int m_lastDrawnLineIndex;
-    //StatusType m_lastGrblStatus{StatusType::UNKNOWN};
-
     double m_originalFeed;
 
     // Keyboard

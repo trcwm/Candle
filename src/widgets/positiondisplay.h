@@ -11,6 +11,7 @@ namespace GUI
 /** widget to display x,y and z position of the CNC */
 class PositionDisplay : public QWidget
 {
+    Q_OBJECT
 public:
     PositionDisplay(QWidget *parent = nullptr);
     PositionDisplay(const QString &name, QWidget *parent = nullptr);

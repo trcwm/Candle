@@ -8,6 +8,7 @@ namespace GUI
 
 class StatusWidget : public QWidget
 {
+    Q_OBJECT
 public:
     StatusWidget(QWidget *parent = nullptr) : QWidget(parent)
     {

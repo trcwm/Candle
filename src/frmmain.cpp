@@ -24,6 +24,7 @@
 #include <QElapsedTimer>
 
 #include "widgets/positiondisplay.h"
+#include "widgets/consoletab.h"
 #include "frmmain.h"
 #include "ui_frmmain.h"
 
@@ -46,7 +47,8 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 #endif
 
 #ifndef UNIX
-    ui->cboCommand->setStyleSheet("QComboBox {padding: 2;} QComboBox::drop-down {width: 0; border-style: none;} QComboBox::down-arrow {image: url(noimg);	border-width: 0;}");
+    //FIXME: console
+    //ui->cboCommand->setStyleSheet("QComboBox {padding: 2;} QComboBox::drop-down {width: 0; border-style: none;} QComboBox::down-arrow {image: url(noimg);	border-width: 0;}");
 #endif
     //    ui->scrollArea->updateMinimumWidth();
 
@@ -87,7 +89,6 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     menuSend->addAction(tr("Send from current line"), this, SLOT(onActSendFromLineTriggered()));
     ui->cmdFileSend->setMenu(menuSend);
 
-    connect(ui->cboCommand, SIGNAL(returnPressed()), this, SLOT(onCboCommandReturnPressed()));
 
     foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
@@ -171,7 +172,8 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     clearTable();
 
     // Console window handling
-    connect(ui->grpConsole, SIGNAL(resized(QSize)), this, SLOT(onConsoleResized(QSize)));
+    // FIXME: console
+    // connect(ui->grpConsole, SIGNAL(resized(QSize)), this, SLOT(onConsoleResized(QSize)));
     connect(ui->scrollAreaWidgetContents, SIGNAL(sizeChanged(QSize)), this, SLOT(onPanelsSizeChanged(QSize)));
 
     m_senderErrorBox = new QMessageBox(QMessageBox::Warning, qApp->applicationDisplayName(), QString(),
@@ -181,6 +183,8 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     // create the status widget before loadSettings 
     // to avoid nullptr dereference..
     m_statusWidget = new GUI::StatusWidget();
+    m_consoleTab   = new GUI::ConsoleTab();
+    connect(m_consoleTab, &GUI::ConsoleTab::returnPressed, this, &frmMain::onCboCommandReturnPressed);
 
     // Loading settings
     loadSettings();
@@ -224,8 +228,6 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     ui->tblProgram->installEventFilter(this);
     ui->cboJogStep->installEventFilter(this);
     ui->cboJogFeed->installEventFilter(this);
-    ui->splitPanels->handle(1)->installEventFilter(this);
-    ui->splitPanels->installEventFilter(this);
 
     connect(&m_timerConnection, SIGNAL(timeout()), this, SLOT(onTimerConnection()));
     connect(&m_timerStateQuery, SIGNAL(timeout()), this, SLOT(onTimerStateQuery()));
@@ -238,14 +240,19 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
         loadFile(qApp->arguments().last());
     }
 
-    auto *displayBoxLayout = new QHBoxLayout();
-    m_machineDisplay = new GUI::PositionDisplay("Machine");
-    m_workDisplay = new GUI::PositionDisplay("Work");    
+    auto *displayBoxLayout = new QVBoxLayout();
+    m_machineDisplay = new GUI::PositionDisplay(tr("Machine"));
+    m_workDisplay = new GUI::PositionDisplay(tr("Work"));
 
     displayBoxLayout->addWidget(m_workDisplay);
     displayBoxLayout->addWidget(m_machineDisplay);
     displayBoxLayout->addWidget(m_statusWidget);
 
+    m_tabWidget = new QTabWidget();
+    m_tabWidget->addTab(m_consoleTab, tr("Console"));
+
+    displayBoxLayout->addWidget(m_tabWidget);
+    
     ui->verticalLayout_2->addLayout(displayBoxLayout);
 }
 
@@ -334,7 +341,8 @@ void frmMain::loadSettings()
     m_settings->setPanelOverriding(set.value("panelOverridingVisible", true).toBool());
     m_settings->setPanelJog(set.value("panelJogVisible", true).toBool());
 
-    ui->grpConsole->setMinimumHeight(set.value("consoleMinHeight", 100).toInt());
+    // FIXME:
+    m_consoleTab->setMinimumHeight(set.value("consoleMinHeight", 100).toInt());
 
     ui->chkAutoScroll->setChecked(set.value("autoScroll", false).toBool());
 
@@ -378,9 +386,10 @@ void frmMain::loadSettings()
     ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1]);
     resizeCheckBoxes();
 
-    ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
-    ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
-    ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
+    //FIXME: console
+    //ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
+    //ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
+    //ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
 
     m_storedKeyboardControl = set.value("keyboardControl", false).toBool();
 
@@ -438,8 +447,9 @@ void frmMain::loadSettings()
     ui->grpJog->setChecked(set.value("jogPanel", true).toBool());
 
     // Restore last commands list
-    ui->cboCommand->addItems(set.value("recentCommands", QStringList()).toStringList());
-    ui->cboCommand->setCurrentIndex(-1);
+    // FIXME: console
+    //ui->cboCommand->addItems(set.value("recentCommands", QStringList()).toStringList());
+    //ui->cboCommand->setCurrentIndex(-1);
 
     m_settingsLoading = false;
 }
@@ -512,7 +522,7 @@ void frmMain::saveSettings()
     set.setValue("panelOverridingVisible", m_settings->panelOverriding());
     set.setValue("panelJogVisible", m_settings->panelJog());
     set.setValue("fontSize", m_settings->fontSize());
-    set.setValue("consoleMinHeight", ui->grpConsole->minimumHeight());
+    set.setValue("consoleMinHeight", m_consoleTab->minimumHeight());
 
     set.setValue("feedOverride", ui->slbFeedOverride->isChecked());
     set.setValue("feedOverrideValue", ui->slbFeedOverride->value());
@@ -556,9 +566,10 @@ void frmMain::saveSettings()
 
     QStringList list;
 
-    for (int i = 0; i < ui->cboCommand->count(); i++)
-        list.append(ui->cboCommand->itemText(i));
-    set.setValue("recentCommands", list);
+    // FIXME: console
+    //for (int i = 0; i < ui->cboCommand->count(); i++)
+    //    list.append(ui->cboCommand->itemText(i));
+    //set.setValue("recentCommands", list);
 }
 
 bool frmMain::saveChanges(bool heightMapMode)
@@ -602,9 +613,11 @@ void frmMain::updateControlsState()
     ui->widgetUserCommands->setEnabled(portOpened && !m_processingFile);
     ui->widgetSpindle->setEnabled(portOpened);
     ui->widgetJog->setEnabled(portOpened && !m_processingFile);
-    //    ui->grpConsole->setEnabled(portOpened);
-    ui->cboCommand->setEnabled(portOpened && (!ui->chkKeyboardControl->isChecked()));
-    ui->cmdCommandSend->setEnabled(portOpened);
+        
+    //FIXME: console
+    m_consoleTab->setEnabled(portOpened);
+    //ui->cboCommand->setEnabled(portOpened && (!ui->chkKeyboardControl->isChecked()));
+    //ui->cmdCommandSend->setEnabled(portOpened);
     //    ui->widgetFeed->setEnabled(!m_transferringFile);
 
     ui->chkTestMode->setEnabled(portOpened && !m_processingFile);
@@ -703,10 +716,7 @@ void frmMain::openPort()
 {
     if (m_serialPort.open(QIODevice::ReadWrite))
     {
-        //FIXME: add connected to status bar
-        //ui->txtStatus->setText(tr("Port opened"));
-        //ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
-        //        updateControlsState();
+        m_statusWidget->setStatus(StatusType::PORTOPEN);
         grblReset();
     }
 }
@@ -739,8 +749,8 @@ void frmMain::sendCommand(QString command, int tableIndex, bool showInConsole)
     //            && (!m_transferringFile || (m_transferringFile && m_showAllCommands) || tableIndex < 0)) {
     if (showInConsole)
     {
-        ui->txtConsole->appendPlainText(command);
-        ca.consoleIndex = ui->txtConsole->blockCount() - 1;
+        m_consoleTab->appendPlainText(command);
+        ca.consoleIndex = m_consoleTab->blockCount() - 1;
     }
     else
     {
@@ -799,8 +809,11 @@ void frmMain::grblReset()
     CommandAttributes ca;
     ca.command = "[CTRL+X]";
     if (m_settings->showUICommands())
-        ui->txtConsole->appendPlainText(ca.command);
-    ca.consoleIndex = m_settings->showUICommands() ? ui->txtConsole->blockCount() - 1 : -1;
+    {
+        m_consoleTab->appendPlainText(ca.command);
+    }
+
+    ca.consoleIndex = m_settings->showUICommands() ? m_consoleTab->blockCount() - 1 : -1;
     ca.tableIndex = -1;
     ca.length = ca.command.length() + 1;
     m_commands.append(ca);
@@ -1113,7 +1126,7 @@ void frmMain::onSerialPortReadyRead()
 
                     // Take command from buffer
                     CommandAttributes ca = m_commands.takeFirst();
-                    QTextBlock tb = ui->txtConsole->document()->findBlockByNumber(ca.consoleIndex);
+                    QTextBlock tb = m_consoleTab->findBlockByNumber(ca.consoleIndex);
                     QTextCursor tc(tb);
 
                     // Restore absolute/relative coordinate system after jog
@@ -1241,8 +1254,10 @@ void frmMain::onSerialPortReadyRead()
                     // Add response to console
                     if (tb.isValid() && tb.text() == ca.command)
                     {
-
-                        bool scrolledDown = ui->txtConsole->verticalScrollBar()->value() == ui->txtConsole->verticalScrollBar()->maximum();
+                        // FIXME: console
+                        // This code seems to make sure that if the console cursor is at the end of the 
+                        // text, the console auto scrolls to the end when adding new text.
+                        //bool scrolledDown = ui->txtConsole->verticalScrollBar()->value() == ui->txtConsole->verticalScrollBar()->maximum();
 
                         // Update text block numbers
                         int blocksAdded = response.count("; ");
@@ -1260,8 +1275,8 @@ void frmMain::onSerialPortReadyRead()
                         tc.insertText(" < " + QString(response).replace("; ", "\r\n"));
                         tc.endEditBlock();
 
-                        if (scrolledDown)
-                            ui->txtConsole->verticalScrollBar()->setValue(ui->txtConsole->verticalScrollBar()->maximum());
+                        //if (scrolledDown)
+                        //    ui->txtConsole->verticalScrollBar()->setValue(ui->txtConsole->verticalScrollBar()->maximum());
                     }
 
                     // Check queue
@@ -1426,7 +1441,9 @@ void frmMain::onSerialPortReadyRead()
 
                     updateControlsState();
                 }
-                ui->txtConsole->appendPlainText(data);
+
+                m_consoleTab->appendPlainText(data);
+                //ui->txtConsole->appendPlainText(data);
             }
         }
         else
@@ -1444,7 +1461,8 @@ void frmMain::onSerialPortError(QSerialPort::SerialPortError error)
     if (error != QSerialPort::NoError && error != previousError)
     {
         previousError = error;
-        ui->txtConsole->appendPlainText(tr("Serial port error ") + QString::number(error) + ": " + m_serialPort.errorString());
+        //FIXME: console
+        //m_consoleTab->appendPlainText(tr("Serial port error ") + QString::number(error) + ": " + m_serialPort.errorString());
         if (m_serialPort.isOpen())
         {
             m_serialPort.close();
@@ -2386,7 +2404,8 @@ void frmMain::applySettings()
     ui->grpOverriding->setVisible(m_settings->panelOverriding());
     ui->grpJog->setVisible(m_settings->panelJog());
 
-    ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
+    // FIXME: console
+    //ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
     // ui->cboCommand->setCompleter(m_settings->autoCompletion());
 
     m_codeDrawer->setSimplify(m_settings->simplify());
@@ -2440,9 +2459,10 @@ void frmMain::applySettings()
         Util::invertButtonIconColors(ui->cmdTop);
     }
 
-    ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
-    ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
-    ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
+    //FIXME: console
+    //ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
+    //ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
+    //ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
 
     //foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
     foreach (StyledToolButton *button, findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
@@ -2529,6 +2549,8 @@ void frmMain::updateParser()
 
 void frmMain::on_cmdCommandSend_clicked()
 {
+    //FIXME: console
+#if 0    
     QString command = ui->cboCommand->currentText();
     if (command.isEmpty())
         return;
@@ -2536,6 +2558,7 @@ void frmMain::on_cmdCommandSend_clicked()
     ui->cboCommand->storeText();
     ui->cboCommand->setCurrentText("");
     sendCommand(command, -1);
+#endif    
 }
 
 void frmMain::on_actFileOpen_triggered()
@@ -2795,7 +2818,7 @@ void frmMain::on_actFileNew_triggered()
 
 void frmMain::on_cmdClearConsole_clicked()
 {
-    ui->txtConsole->clear();
+    m_consoleTab->clear();
 }
 
 bool frmMain::saveProgramToFile(QString fileName, GCodeTableModel *model)
@@ -3073,7 +3096,10 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
             {
                 ui->chkKeyboardControl->toggle();
                 if (!ui->chkKeyboardControl->isChecked())
-                    ui->cboCommand->setFocus();
+                {
+                    //FIXME: console
+                    //ui->cboCommand->setFocus();
+                }
             }
 
             if (!m_processingFile && ui->chkKeyboardControl->isChecked())
@@ -3137,36 +3163,37 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
         {
         case QEvent::MouseButtonPress:
             // Store current console group box minimum & real heights
-            m_storedConsoleMinimumHeight = ui->grpConsole->minimumHeight();
-            m_storedConsoleHeight = ui->grpConsole->height();
+            m_storedConsoleMinimumHeight = m_consoleTab->minimumHeight();
+            m_storedConsoleHeight = m_consoleTab->height();
 
             // Update splited sizes
-            ui->splitPanels->setSizes(QList<int>() << ui->scrollArea->height() << ui->grpConsole->height());
+            ui->splitPanels->setSizes(QList<int>() << ui->scrollArea->height() << m_consoleTab->height());
 
             // Set new console mimimum height
-            ui->grpConsole->setMinimumHeight(qMax(minHeight, ui->splitPanels->height() - ui->scrollAreaWidgetContents->sizeHint().height() - ui->splitPanels->handleWidth() - 4));
+            //FIXME: console
+            //m_consoleTab->setMinimumHeight(qMax(minHeight, ui->splitPanels->height() - ui->scrollAreaWidgetContents->sizeHint().height() - ui->splitPanels->handleWidth() - 4));
             break;
         case QEvent::MouseButtonRelease:
             // Store new console minimum height if height was changed with split handle
-            if (ui->grpConsole->height() != m_storedConsoleHeight)
+            if (m_consoleTab->height() != m_storedConsoleHeight)
             {
-                ui->grpConsole->setMinimumHeight(ui->grpConsole->height());
+                //m_consoleTab->setMinimumHeight(m_consoleTab->height());
             }
             else
             {
-                ui->grpConsole->setMinimumHeight(m_storedConsoleMinimumHeight);
+                //m_consoleTab->setMinimumHeight(m_storedConsoleMinimumHeight);
             }
             break;
         case QEvent::MouseButtonDblClick:
             // Switch to min/max console size
-            if (ui->grpConsole->height() == minHeight || !ui->scrollArea->verticalScrollBar()->isVisible())
+            if (m_consoleTab->height() == minHeight || !ui->scrollArea->verticalScrollBar()->isVisible())
             {
                 ui->splitPanels->setSizes(QList<int>() << ui->scrollArea->minimumHeight()
                                                        << ui->splitPanels->height() - ui->splitPanels->handleWidth() - ui->scrollArea->minimumHeight());
             }
             else
             {
-                ui->grpConsole->setMinimumHeight(minHeight);
+                //m_consoleTab->setMinimumHeight(minHeight);
                 onPanelsSizeChanged(ui->scrollAreaWidgetContents->sizeHint());
             }
             break;
@@ -3180,7 +3207,8 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
 
 int frmMain::getConsoleMinHeight()
 {
-    return ui->grpConsole->height() - ui->grpConsole->contentsRect().height() + ui->spacerConsole->geometry().height() + ui->grpConsole->layout()->margin() * 2 + ui->cboCommand->height();
+    // FIXME: console
+    return m_consoleTab->minimumHeight();
 }
 
 void frmMain::onConsoleResized(QSize size)
@@ -3188,11 +3216,13 @@ void frmMain::onConsoleResized(QSize size)
     Q_UNUSED(size)
 
     int minHeight = getConsoleMinHeight();
-    bool visible = ui->grpConsole->height() > minHeight;
-    if (ui->txtConsole->isVisible() != visible)
+    bool visible = m_consoleTab->height() > minHeight;
+    if (m_consoleTab->isVisible() != visible)
     {
-        ui->txtConsole->setVisible(visible);
+        //m_consoleTab->setVisible(visible);        
     }
+
+    m_consoleTab->setVisible(true);
 }
 
 void frmMain::onPanelsSizeChanged(QSize size)
@@ -3332,11 +3362,12 @@ void frmMain::onActRecentFileTriggered()
 
 void frmMain::onCboCommandReturnPressed()
 {
-    QString command = ui->cboCommand->currentText();
+    //FIXME: console
+    QString command = m_consoleTab->getCommand();
     if (command.isEmpty())
         return;
 
-    ui->cboCommand->setCurrentText("");
+    m_consoleTab->clearCommand();
     sendCommand(command, -1);
 }
 
