@@ -12,7 +12,7 @@ class StatusWidget : public QWidget
 public:
     StatusWidget(QWidget *parent = nullptr) : QWidget(parent)
     {
-        create();
+        createWidgets();
     }
 
     enum class StatusType : int
@@ -33,8 +33,6 @@ public:
     };
 
     static StatusType statusFromString(const QString &statusStr);
-
-    void create();
     
     void reset()
     {
@@ -51,6 +49,8 @@ public:
     void setColors(const QString &bkcolor, const QString &txtcolor);
 
 protected:
+    void createWidgets();
+
     StatusType   m_status{StatusType::UNKNOWN};
     QLabel      *m_name{nullptr};
     QLabel      *m_statusTxt{nullptr};

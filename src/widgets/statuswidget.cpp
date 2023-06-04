@@ -3,7 +3,7 @@
 namespace GUI
 {
 
-void StatusWidget::create()
+void StatusWidget::createWidgets()
 {
     m_layout = new QHBoxLayout();
 

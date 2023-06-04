@@ -31,7 +31,7 @@ public:
     }
 
 protected:
-    void create();
+    void createWidgets();
 
     QVector3D m_pos;
 

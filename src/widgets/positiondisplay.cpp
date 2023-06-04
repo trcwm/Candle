@@ -6,31 +6,31 @@ namespace GUI
 
 PositionDisplay::PositionDisplay(const QString &name, QWidget *parent) : QWidget(parent)
 {
-    create();
+    createWidgets();
     setName(name);
 }
 
 PositionDisplay::PositionDisplay(QWidget *parent) : QWidget(parent)
 {
-    create();
+    createWidgets();
 }
 
-void PositionDisplay::create()
+void PositionDisplay::createWidgets()
 {
-    setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
+    //QWidget::setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
 
     QFont font("Monospace");
     font.setStyleHint(QFont::Monospace);
 
-    m_layout = new QHBoxLayout;
+    m_layout = new QHBoxLayout();
     m_name   = new QLabel("");
     m_x      = new QLabel("");
     m_y      = new QLabel("");
     m_z      = new QLabel("");
 
-    m_x->setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
-    m_y->setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
-    m_z->setStyleSheet("border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
+    m_x->setStyleSheet("background-color: white; border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
+    m_y->setStyleSheet("background-color: white; border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
+    m_z->setStyleSheet("background-color: white; border-style: solid; border-color: rgb(100,100,100); border-width: 1px;");
 
     m_x->setFont(font);
     m_y->setFont(font);
