@@ -9,6 +9,7 @@ void StatusWidget::createWidgets()
 
     m_name = new QLabel("Status");
     m_statusTxt = new QLabel("XXXXXXXXXXXXXXX");
+    m_statusTxt->setAlignment(Qt::AlignCenter);
     m_layout->addWidget(m_name);
     m_layout->addWidget(m_statusTxt);
 
