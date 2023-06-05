@@ -1331,8 +1331,8 @@ QSlider::handle:horizontal:hover {
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>232</width>
-            <height>513</height>
+            <width>228</width>
+            <height>442</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -1808,61 +1808,6 @@ QSlider::handle:horizontal:hover {
              </layout>
             </widget>
            </item>
-           <item>
-            <widget class="GroupBox" name="grpJog">
-             <property name="title">
-              <string>Jog</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="overrided" stdset="0">
-              <bool>false</bool>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_11">
-              <property name="leftMargin">
-               <number>8</number>
-              </property>
-              <property name="topMargin">
-               <number>8</number>
-              </property>
-              <property name="rightMargin">
-               <number>8</number>
-              </property>
-              <property name="bottomMargin">
-               <number>8</number>
-              </property>
-              <item>
-               <widget class="QWidget" name="widgetJog" native="true">
-                <layout class="QVBoxLayout" name="verticalLayout_9">
-                 <property name="spacing">
-                  <number>10</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="QCheckBox" name="chkKeyboardControl">
-                   <property name="text">
-                    <string>Keyboard control</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
           </layout>
          </widget>
         </widget>
@@ -2063,77 +2008,10 @@ QSlider::handle:horizontal:hover {
   <tabstop>grpSpindle</tabstop>
   <tabstop>cmdSpindle</tabstop>
   <tabstop>grpOverriding</tabstop>
-  <tabstop>grpJog</tabstop>
-  <tabstop>chkKeyboardControl</tabstop>
   <tabstop>grpHeightMap</tabstop>
  </tabstops>
  <resources>
   <include location="images.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>chkKeyboardControl</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>tblProgram</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>858</x>
-     <y>813</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>493</x>
-     <y>576</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>chkKeyboardControl</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>slbSpindle</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>786</x>
-     <y>804</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>741</x>
-     <y>431</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>chkKeyboardControl</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>widgetFeed</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>807</x>
-     <y>799</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>773</x>
-     <y>504</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>chkKeyboardControl</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>tblHeightMap</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>799</x>
-     <y>803</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>456</x>
-     <y>790</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

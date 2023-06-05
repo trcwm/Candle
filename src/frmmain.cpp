@@ -198,11 +198,14 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     ui->tblProgram->hideColumn(5);
     updateControlsState();
 
+#if 0
+    // FIXME: job
     // Prepare jog buttons
     foreach (StyledToolButton *button, ui->grpJog->findChildren<StyledToolButton *>(QRegularExpression("cmdJogFeed\\d")))
     {
         connect(button, SIGNAL(clicked(bool)), this, SLOT(onCmdJogFeedClicked()));
     }
+#endif
 
     // Setting up spindle slider box
     ui->slbSpindle->setTitle(tr("Speed:"));
@@ -459,7 +462,6 @@ void frmMain::loadSettings()
     ui->grpHeightMap->setChecked(set.value("heightmapPanel", true).toBool());
     ui->grpSpindle->setChecked(set.value("spindlePanel", true).toBool());
     ui->grpOverriding->setChecked(set.value("feedPanel", true).toBool());
-    ui->grpJog->setChecked(set.value("jogPanel", true).toBool());
 
     // Restore last commands list
     // FIXME: console
@@ -519,8 +521,9 @@ void frmMain::saveSettings()
     set.setValue("heightmapPanel", ui->grpHeightMap->isChecked());
     set.setValue("spindlePanel", ui->grpSpindle->isChecked());
     set.setValue("feedPanel", ui->grpOverriding->isChecked());
-    set.setValue("jogPanel", ui->grpJog->isChecked());
-    set.setValue("keyboardControl", ui->chkKeyboardControl->isChecked());
+    
+    //FIXME: Jog
+    //set.setValue("keyboardControl", ui->chkKeyboardControl->isChecked());
     set.setValue("autoCompletion", m_settings->autoCompletion());
     set.setValue("units", m_settings->units());
     set.setValue("storedX", m_storedX);
@@ -629,9 +632,8 @@ void frmMain::updateControlsState()
     ui->grpControl->setEnabled(portOpened);
     ui->widgetUserCommands->setEnabled(portOpened && !m_processingFile);
     ui->widgetSpindle->setEnabled(portOpened);
-    ui->widgetJog->setEnabled(portOpened && !m_processingFile);
-        
-    //FIXME: console
+
+    m_jogWidget->setEnabled(portOpened && !m_processingFile);
     m_consoleTab->setEnabled(portOpened);
     //ui->cboCommand->setEnabled(portOpened && (!ui->chkKeyboardControl->isChecked()));
     //ui->cmdCommandSend->setEnabled(portOpened);
@@ -669,8 +671,9 @@ void frmMain::updateControlsState()
     this->setWindowTitle(m_programFileName.isEmpty() ? qApp->applicationDisplayName()
                                                      : m_programFileName.mid(m_programFileName.lastIndexOf("/") + 1) + " - " + qApp->applicationDisplayName());
 
-    if (!m_processingFile)
-        ui->chkKeyboardControl->setChecked(m_storedKeyboardControl);
+    // FIXME: jog
+    //if (!m_processingFile)
+    //    ui->chkKeyboardControl->setChecked(m_storedKeyboardControl);
 
 #ifdef WINDOWS
     if (QSysInfo::windowsVersion() >= QSysInfo::WV_WINDOWS7)
@@ -702,7 +705,9 @@ void frmMain::updateControlsState()
     ui->grpProgram->ensurePolished();
 
     ui->grpHeightMapSettings->setVisible(m_heightMapMode);
-    ui->grpHeightMapSettings->setEnabled(!m_processingFile && !ui->chkKeyboardControl->isChecked());
+    // FIXME: jog
+    //ui->grpHeightMapSettings->setEnabled(!m_processingFile && !ui->chkKeyboardControl->isChecked());
+    ui->grpHeightMapSettings->setEnabled(!m_processingFile);
 
     // FIXME: jog
     //ui->cboJogStep->setEditable(!ui->chkKeyboardControl->isChecked());
@@ -1007,7 +1012,7 @@ void frmMain::onSerialPortReadyRead()
             }
 
             // Update work coordinates
-            int prec = m_settings->units() == 0 ? 3 : 4;
+            //int prec = m_settings->units() == 0 ? 3 : 4;
             
             auto mpos = m_machineDisplay->getPosition();
             m_workDisplay->setPosition(mpos - workOffset);
@@ -1150,7 +1155,9 @@ void frmMain::onSerialPortReadyRead()
                     // Restore absolute/relative coordinate system after jog
                     if (ca.command.toUpper() == "$G" && ca.tableIndex == -2)
                     {
-                        if (ui->chkKeyboardControl->isChecked())
+                        //FIXME: jog                        
+                        //if (ui->chkKeyboardControl->isChecked())
+                        if (false)
                             m_absoluteCoordinates = response.contains("G90");
                         else if (response.contains("G90"))
                             sendCommand("G90", -1, m_settings->showUICommands());
@@ -2004,8 +2011,10 @@ void frmMain::on_cmdFileSend_clicked()
     m_transferCompleted = false;
     m_processingFile = true;
     m_fileEndSent = false;
-    m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
-    ui->chkKeyboardControl->setChecked(false);
+
+    //FIXME: jog
+    //m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
+    //ui->chkKeyboardControl->setChecked(false);
 
     if (!ui->chkTestMode->isChecked())
         storeOffsets(); // Allready stored on check
@@ -2125,8 +2134,10 @@ void frmMain::onActSendFromLineTriggered()
     m_transferCompleted = false;
     m_processingFile = true;
     m_fileEndSent = false;
-    m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
-    ui->chkKeyboardControl->setChecked(false);
+
+    // FIXME: jog
+    //m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
+    //ui->chkKeyboardControl->setChecked(false);
 
     if (!ui->chkTestMode->isChecked())
         storeOffsets(); // Allready stored on check
@@ -2422,7 +2433,6 @@ void frmMain::applySettings()
     ui->grpHeightMap->setVisible(m_settings->panelHeightmap());
     ui->grpSpindle->setVisible(m_settings->panelSpindle());
     ui->grpOverriding->setVisible(m_settings->panelOverriding());
-    ui->grpJog->setVisible(m_settings->panelJog());
 
     // FIXME: console
     //ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
@@ -3119,8 +3129,9 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
 
             if (!m_processingFile && keyEvent->key() == Qt::Key_ScrollLock && obj == this)
             {
-                ui->chkKeyboardControl->toggle();
-                if (!ui->chkKeyboardControl->isChecked())
+                //FIXME:
+                //ui->chkKeyboardControl->toggle();
+                //if (!ui->chkKeyboardControl->isChecked())
                 {
                     //FIXME: console
                     //ui->cboCommand->setFocus();
@@ -3128,7 +3139,8 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
             }
 
             // FIXME: jog
-            if (!m_processingFile && ui->chkKeyboardControl->isChecked())
+            //if (!m_processingFile && ui->chkKeyboardControl->isChecked())
+            if (!m_processingFile)
             {
                 if (keyEvent->key() == Qt::Key_7)
                 {
@@ -3262,19 +3274,13 @@ bool frmMain::keyIsMovement(int key)
     return key == Qt::Key_4 || key == Qt::Key_6 || key == Qt::Key_8 || key == Qt::Key_2 || key == Qt::Key_9 || key == Qt::Key_3;
 }
 
-void frmMain::on_grpJog_toggled(bool checked)
-{
-    //updateJogTitle();
-    updateLayouts();
-
-    ui->widgetJog->setVisible(checked);
-}
-
 void frmMain::on_chkKeyboardControl_toggled(bool checked)
 {
+    #if 0
     ui->grpJog->setProperty("overrided", checked);
     style()->unpolish(ui->grpJog);
     ui->grpJog->ensurePolished();
+    #endif
 
     // Store/restore coordinate system
     if (checked)
@@ -3290,25 +3296,9 @@ void frmMain::on_chkKeyboardControl_toggled(bool checked)
     if (!m_processingFile)
         m_storedKeyboardControl = checked;
 
-    //updateJogTitle();
     updateControlsState();
 }
 
-#if 0
-void frmMain::updateJogTitle()
-{
-    if (ui->grpJog->isChecked() || !ui->chkKeyboardControl->isChecked())
-    {
-        ui->grpJog->setTitle(tr("Jog"));
-    }
-    else if (ui->chkKeyboardControl->isChecked())
-    {
-        ui->grpJog->setTitle(tr("Jog") + QString(tr(" (%1/%2)"))
-                                             .arg(ui->cboJogStep->currentText().toDouble() > 0 ? ui->cboJogStep->currentText() : tr("C"))
-                                             .arg(ui->cboJogFeed->currentText()));
-    }
-}
-#endif
 
 void frmMain::on_tblProgram_customContextMenuRequested(const QPoint &pos)
 {

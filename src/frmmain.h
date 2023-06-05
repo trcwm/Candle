@@ -144,7 +144,6 @@ private slots:
     void on_actAbout_triggered();
     void on_grpOverriding_toggled(bool checked);
     void on_grpSpindle_toggled(bool checked);
-    void on_grpJog_toggled(bool checked);
     void on_grpUserCommands_toggled(bool checked);
     void on_chkKeyboardControl_toggled(bool checked);
     void on_tblProgram_customContextMenuRequested(const QPoint &pos);
@@ -364,7 +363,6 @@ private:
     int getConsoleMinHeight();
     void updateOverride(SliderBox *slider, int value, char command);
     void jogStep();
-    void updateJogTitle();
 };
 
 #endif // FRMMAIN_H
