@@ -1159,7 +1159,7 @@ void frmMain::onSerialPortReadyRead()
                     // Jog
                     if (ca.command.toUpper().contains("$J=") && ca.tableIndex == -2)
                     {
-                        qDebug() << "HUH?!";
+                        qDebug() << "HUH?! " << response;
                         //jogStep();
                     }
 
