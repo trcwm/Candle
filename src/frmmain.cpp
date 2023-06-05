@@ -60,13 +60,6 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_currentModel = &m_programModel;
     m_transferCompleted = true;
 
-#if 0
-    ui->cmdXMinus->setBackColor(QColor(153, 180, 209));
-    ui->cmdXPlus->setBackColor(ui->cmdXMinus->backColor());
-    ui->cmdYMinus->setBackColor(ui->cmdXMinus->backColor());
-    ui->cmdYPlus->setBackColor(ui->cmdXMinus->backColor());
-#endif
-
     ui->cmdFit->setParent(ui->glwVisualizer);
     ui->cmdIsometric->setParent(ui->glwVisualizer);
     ui->cmdTop->setParent(ui->glwVisualizer);
@@ -90,7 +83,6 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     QMenu *menuSend = new QMenu();
     menuSend->addAction(tr("Send from current line"), this, SLOT(onActSendFromLineTriggered()));
     ui->cmdFileSend->setMenu(menuSend);
-
 
     foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
