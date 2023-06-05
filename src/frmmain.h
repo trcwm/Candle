@@ -121,14 +121,17 @@ private slots:
     void on_actServiceSettings_triggered();
     void on_actFileOpen_triggered();
     void on_cmdCommandSend_clicked();
-    void on_cmdHome_clicked();
-    void on_cmdTouch_clicked();
-    void on_cmdZeroXY_clicked();
-    void on_cmdZeroZ_clicked();
-    void on_cmdRestoreOrigin_clicked();
-    void on_cmdReset_clicked();
-    void on_cmdUnlock_clicked();
-    void on_cmdSafePosition_clicked();
+
+    // Button bar messages
+    void onCmdHome_clicked();
+    void onCmdTouch_clicked();
+    void onCmdZeroXY_clicked();
+    void onCmdZeroZ_clicked();
+    void onCmdRestoreOrigin_clicked();
+    void onCmdReset_clicked();
+    void onCmdUnlock_clicked();
+    void onCmdSafePosition_clicked();
+    
     void on_cmdSpindle_toggled(bool checked);
     void on_chkTestMode_clicked(bool checked);
     void on_cmdFilePause_clicked(bool checked);
@@ -145,7 +148,7 @@ private slots:
     void on_actAbout_triggered();
     void on_grpOverriding_toggled(bool checked);
     void on_grpSpindle_toggled(bool checked);
-    void on_grpUserCommands_toggled(bool checked);
+    //void on_grpUserCommands_toggled(bool checked);
     void on_chkKeyboardControl_toggled(bool checked);
     void on_tblProgram_customContextMenuRequested(const QPoint &pos);
     void on_splitter_splitterMoved(int pos, int index);

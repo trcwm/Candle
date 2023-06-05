@@ -186,6 +186,13 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 
     m_buttonBar    = new GUI::ButtonBar();
     addToolBar(m_buttonBar);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdHome, this, &frmMain::onCmdHome_clicked);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdRestart, this, &frmMain::onCmdReset_clicked);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdUnlock, this, &frmMain::onCmdUnlock_clicked);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdProbeZ, this, &frmMain::onCmdTouch_clicked);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdZeroXY, this, &frmMain::onCmdZeroXY_clicked);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdZeroZ, this, &frmMain::onCmdZeroZ_clicked);
+    connect(m_buttonBar, &GUI::ButtonBar::cmdOrigin, this, &frmMain::onCmdRestoreOrigin_clicked);
 
     // Loading settings
     loadSettings();
@@ -372,7 +379,7 @@ void frmMain::loadSettings()
     m_storedY = set.value("storedY", 0).toDouble();
     m_storedZ = set.value("storedZ", 0).toDouble();
 
-    ui->cmdRestoreOrigin->setToolTip(QString(tr("Restore origin:\n%1, %2, %3")).arg(m_storedX).arg(m_storedY).arg(m_storedZ));
+    m_buttonBar->setOriginTooltip(QString(tr("Restore origin:\n%1, %2, %3")).arg(m_storedX).arg(m_storedY).arg(m_storedZ));
 
     m_recentFiles = set.value("recentFiles", QStringList()).toStringList();
     m_recentHeightmaps = set.value("recentHeightmaps", QStringList()).toStringList();
@@ -453,7 +460,6 @@ void frmMain::loadSettings()
     ui->scrollArea->updateMinimumWidth();
 
     // Restore panels state
-    ui->grpUserCommands->setChecked(set.value("userCommandsPanel", true).toBool());
     ui->grpHeightMap->setChecked(set.value("heightmapPanel", true).toBool());
     ui->grpSpindle->setChecked(set.value("spindlePanel", true).toBool());
     ui->grpOverriding->setChecked(set.value("feedPanel", true).toBool());
@@ -512,7 +518,6 @@ void frmMain::saveSettings()
     set.setValue("splitter", ui->splitter->saveState());
     set.setValue("formGeometry", this->saveGeometry());
     set.setValue("formSettingsSize", m_settings->size());
-    set.setValue("userCommandsPanel", ui->grpUserCommands->isChecked());
     set.setValue("heightmapPanel", ui->grpHeightMap->isChecked());
     set.setValue("spindlePanel", ui->grpSpindle->isChecked());
     set.setValue("feedPanel", ui->grpOverriding->isChecked());
@@ -624,8 +629,8 @@ void frmMain::updateControlsState()
 {
     bool portOpened = m_serialPort.isOpen();
 
-    ui->grpControl->setEnabled(portOpened);
-    ui->widgetUserCommands->setEnabled(portOpened && !m_processingFile);
+    m_buttonBar->setEnabled(portOpened);
+    m_buttonBar->enableUserButtons(portOpened && !m_processingFile);
     ui->widgetSpindle->setEnabled(portOpened);
 
     m_jogWidget->setEnabled(portOpened && !m_processingFile);
@@ -635,6 +640,9 @@ void frmMain::updateControlsState()
     //    ui->widgetFeed->setEnabled(!m_transferringFile);
 
     ui->chkTestMode->setEnabled(portOpened && !m_processingFile);
+    m_buttonBar->enableControlButtons(!m_processingFile);
+
+#if 0    
     ui->cmdHome->setEnabled(!m_processingFile);
     ui->cmdTouch->setEnabled(!m_processingFile);
     ui->cmdZeroXY->setEnabled(!m_processingFile);
@@ -642,6 +650,8 @@ void frmMain::updateControlsState()
     ui->cmdRestoreOrigin->setEnabled(!m_processingFile);
     ui->cmdSafePosition->setEnabled(!m_processingFile);
     ui->cmdUnlock->setEnabled(!m_processingFile);
+#endif
+
     ui->cmdSpindle->setEnabled(!m_processingFile);
 
     ui->actFileNew->setEnabled(!m_processingFile);
@@ -896,10 +906,7 @@ void frmMain::onSerialPortReadyRead()
                 m_statusWidget->setStatus(status);
 
                 // Update controls
-                ui->cmdRestoreOrigin->setEnabled(status == StatusType::IDLE);
-                ui->cmdSafePosition->setEnabled(status == StatusType::IDLE);
-                ui->cmdZeroXY->setEnabled(status == StatusType::IDLE);
-                ui->cmdZeroZ->setEnabled(status == StatusType::IDLE);
+                m_buttonBar->enablePositionButtons(status == StatusType::IDLE);
                 ui->chkTestMode->setEnabled(status != StatusType::RUN && !m_processingFile);
                 ui->chkTestMode->setChecked(status == StatusType::CHECK);
                 ui->cmdFilePause->setChecked(status == StatusType::HOLD0 || status == StatusType::HOLD1 || status == StatusType::QUEUE);
@@ -1206,7 +1213,7 @@ void frmMain::onSerialPortReadyRead()
                                 m_settingZeroZ = false;
                                 m_storedZ = toMetric(rx.cap(3).toDouble());
                             }
-                            ui->cmdRestoreOrigin->setToolTip(QString(tr("Restore origin:\n%1, %2, %3")).arg(m_storedX).arg(m_storedY).arg(m_storedZ));
+                            m_buttonBar->setOriginTooltip(QString(tr("Restore origin:\n%1, %2, %3")).arg(m_storedX).arg(m_storedY).arg(m_storedZ));
                         }
                     }
 
@@ -2424,7 +2431,6 @@ void frmMain::applySettings()
 
     ui->scrollArea->setVisible(m_settings->panelHeightmap() || m_settings->panelOverriding() || m_settings->panelJog() || m_settings->panelSpindle());
 
-    ui->grpUserCommands->setVisible(m_settings->panelUserCommands());
     ui->grpHeightMap->setVisible(m_settings->panelHeightmap());
     ui->grpSpindle->setVisible(m_settings->panelSpindle());
     ui->grpOverriding->setVisible(m_settings->panelOverriding());
@@ -2591,14 +2597,14 @@ void frmMain::on_actFileOpen_triggered()
     on_cmdFileOpen_clicked();
 }
 
-void frmMain::on_cmdHome_clicked()
+void frmMain::onCmdHome_clicked()
 {
     m_homing = true;
     m_updateSpindleSpeed = true;
     sendCommand("$H", -1, m_settings->showUICommands());
 }
 
-void frmMain::on_cmdTouch_clicked()
+void frmMain::onCmdTouch_clicked()
 {
     //    m_homing = true;
 
@@ -2610,21 +2616,21 @@ void frmMain::on_cmdTouch_clicked()
     }
 }
 
-void frmMain::on_cmdZeroXY_clicked()
+void frmMain::onCmdZeroXY_clicked()
 {
     m_settingZeroXY = true;
     sendCommand("G92X0Y0", -1, m_settings->showUICommands());
     sendCommand("$#", -2, m_settings->showUICommands());
 }
 
-void frmMain::on_cmdZeroZ_clicked()
+void frmMain::onCmdZeroZ_clicked()
 {
     m_settingZeroZ = true;
     sendCommand("G92Z0", -1, m_settings->showUICommands());
     sendCommand("$#", -2, m_settings->showUICommands());
 }
 
-void frmMain::on_cmdRestoreOrigin_clicked()
+void frmMain::onCmdRestoreOrigin_clicked()
 {
     // Restore offset
     sendCommand(QString("G21"), -1, m_settings->showUICommands());
@@ -2647,18 +2653,18 @@ void frmMain::on_cmdRestoreOrigin_clicked()
         }
 }
 
-void frmMain::on_cmdReset_clicked()
+void frmMain::onCmdReset_clicked()
 {
     grblReset();
 }
 
-void frmMain::on_cmdUnlock_clicked()
+void frmMain::onCmdUnlock_clicked()
 {
     m_updateSpindleSpeed = true;
     sendCommand("$X", -1, m_settings->showUICommands());
 }
 
-void frmMain::on_cmdSafePosition_clicked()
+void frmMain::onCmdSafePosition_clicked()
 {
     QStringList list = m_settings->safePositionCommand().split(";");
 
@@ -3054,11 +3060,6 @@ void frmMain::on_grpSpindle_toggled(bool checked)
     updateLayouts();
 
     ui->widgetSpindle->setVisible(checked);
-}
-
-void frmMain::on_grpUserCommands_toggled(bool checked)
-{
-    ui->widgetUserCommands->setVisible(checked);
 }
 
 bool frmMain::eventFilter(QObject *obj, QEvent *event)
