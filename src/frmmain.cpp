@@ -192,6 +192,9 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     connect(m_jogWidget, &GUI::JogWidget::jogVectorChanged, this, &frmMain::onJogVectorChanged);
     connect(m_jogWidget, &GUI::JogWidget::stopClicked, this, &frmMain::onJogStopClicked);
 
+    m_buttonBar    = new GUI::ButtonBar();
+    addToolBar(m_buttonBar);
+
     // Loading settings
     loadSettings();
     ui->tblProgram->hideColumn(4);

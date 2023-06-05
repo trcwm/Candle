@@ -41,6 +41,7 @@
 #include "widgets/statuswidget.h"
 #include "widgets/consoletab.h"
 #include "widgets/jogwidget.h"
+#include "widgets/buttonbar.h"
 
 #include "frmsettings.h"
 #include "frmabout.h"
@@ -222,7 +223,7 @@ private:
     GUI::StatusWidget    *m_statusWidget   = nullptr;
     GUI::ConsoleTab      *m_consoleTab     = nullptr;
     GUI::JogWidget       *m_jogWidget      = nullptr;
-
+    GUI::ButtonBar       *m_buttonBar      = nullptr;
     QTabWidget           *m_tabWidget      = nullptr;
     
     QString m_settingsFileName;
