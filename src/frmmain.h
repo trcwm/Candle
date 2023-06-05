@@ -335,6 +335,9 @@ private:
     void updateRecentFilesMenu();
     void addRecentFile(QString fileName);
     void addRecentHeightmap(QString fileName);
+
+    // Convert inches to metric depending on
+    // m_settings->units()
     double toMetric(double value) const;
     QVector3D toMetric(const QVector3D &value) const;
 
@@ -359,7 +362,7 @@ private:
     bool compareCoordinates(double x, double y, double z);
     int getConsoleMinHeight();
     void updateOverride(SliderBox *slider, int value, char command);
-    void jogStep(QVector3D jogVector);
+    void jogStep();
     void updateJogTitle();
 };
 

@@ -1159,8 +1159,9 @@ void frmMain::onSerialPortReadyRead()
                     // Jog
                     if (ca.command.toUpper().contains("$J=") && ca.tableIndex == -2)
                     {
-                        qDebug() << "HUH?! " << response;
-                        //jogStep();
+                        // This gets called when a jog operation has completed.
+                        // We might need another jog step...
+                        jogStep();
                     }
 
                     // Process parser status
@@ -4334,8 +4335,10 @@ void frmMain::updateOverride(SliderBox *slider, int value, char command)
     }
 }
 
-void frmMain::jogStep(QVector3D jogVector)
+void frmMain::jogStep()
 {
+    QVector3D jogVector = m_jogWidget->getJogVector();
+
     if (jogVector.length() == 0)
         return;
 
@@ -4375,7 +4378,7 @@ void frmMain::jogStep(QVector3D jogVector)
 
 void frmMain::onJogVectorChanged()
 {    
-    jogStep(m_jogWidget->getJogVector());
+    jogStep();
 }
 
 void frmMain::onJogStopClicked()
