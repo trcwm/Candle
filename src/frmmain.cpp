@@ -1159,7 +1159,8 @@ void frmMain::onSerialPortReadyRead()
                     // Jog
                     if (ca.command.toUpper().contains("$J=") && ca.tableIndex == -2)
                     {
-                        jogStep();
+                        qDebug() << "HUH?!";
+                        //jogStep();
                     }
 
                     // Process parser status
@@ -4333,9 +4334,9 @@ void frmMain::updateOverride(SliderBox *slider, int value, char command)
     }
 }
 
-void frmMain::jogStep()
+void frmMain::jogStep(QVector3D jogVector)
 {
-    if (m_jogVector.length() == 0)
+    if (jogVector.length() == 0)
         return;
 
     if (m_jogWidget->getStep() == 0)
@@ -4347,7 +4348,7 @@ void frmMain::jogStep()
         double dt = qMax(0.01, sqrt(v) / (2 * acc * (N - 1))); // Single jog command time
         double s = v * dt;                                     // Jog distance
 
-        QVector3D vec = m_jogVector.normalized() * s;
+        QVector3D vec = jogVector.normalized() * s;
 
         //    qDebug() << "jog" << speed << v << acc << dt <<s;
 
@@ -4361,7 +4362,7 @@ void frmMain::jogStep()
     else
     {
         int speed = static_cast<int>(m_jogWidget->getFeed()); // Speed mm/min
-        QVector3D vec = m_jogVector * m_jogWidget->getStep();
+        QVector3D vec = jogVector * m_jogWidget->getStep();
 
         sendCommand(QString("$J=G21G91X%1Y%2Z%3F%4")
                         .arg(vec.x(), 0, 'g', 4)
@@ -4374,9 +4375,7 @@ void frmMain::jogStep()
 
 void frmMain::onJogVectorChanged()
 {    
-    m_jogVector = m_jogWidget->getJogVector();
-    qDebug() << "Jog: " << m_jogVector;
-    jogStep();
+    jogStep(m_jogWidget->getJogVector());
 }
 
 void frmMain::onJogStopClicked()
