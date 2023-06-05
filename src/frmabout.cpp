@@ -1,5 +1,6 @@
-// This file is a part of "Candle" application.
+// This file is a part of "CandleM" application.
 // Copyright 2015-2016 Hayrullin Denis Ravilevich
+// Copyright 2023 Niels Moseley
 
 #include <QDesktopServices>
 #include "frmabout.h"
@@ -13,7 +14,8 @@ frmAbout::frmAbout(QWidget *parent) :
 
     ui->lblAbout->setText(ui->lblAbout->text().arg(qApp->applicationVersion()));
 
-    QFile file(qApp->applicationDirPath() + "/LICENSE");
+    //QFile file(qApp->applicationDirPath() + "/LICENSE");
+    QFile file(":/LICENSE");
 
     if (file.open(QIODevice::ReadOnly)) {
         ui->txtLicense->setPlainText(file.readAll());

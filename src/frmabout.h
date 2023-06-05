@@ -1,5 +1,6 @@
-// This file is a part of "Candle" application.
+// This file is a part of "CandleM" application.
 // Copyright 2015-2016 Hayrullin Denis Ravilevich
+// Copyright 2023 Niels Moseley
 
 #ifndef FRMABOUT_H
 #define FRMABOUT_H
