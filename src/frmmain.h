@@ -39,6 +39,7 @@
 #include "widgets/positiondisplay.h"
 #include "widgets/statuswidget.h"
 #include "widgets/consoletab.h"
+#include "widgets/jogwidget.h"
 
 #include "frmsettings.h"
 #include "frmabout.h"
@@ -170,31 +171,8 @@ private slots:
     void on_cmdFileAbort_clicked();
     void on_cmdSpindle_clicked(bool checked);   
 
-    void on_cmdYPlus_pressed();
-
-    void on_cmdYPlus_released();
-
-    void on_cmdYMinus_pressed();
-
-    void on_cmdYMinus_released();
-
-    void on_cmdXPlus_pressed();
-
-    void on_cmdXPlus_released();
-
-    void on_cmdXMinus_pressed();
-
-    void on_cmdXMinus_released();
-
-    void on_cmdZPlus_pressed();
-
-    void on_cmdZPlus_released();
-
-    void on_cmdZMinus_pressed();
-
-    void on_cmdZMinus_released();
-
-    void on_cmdStop_clicked();
+    void onJogVectorChanged();
+    void onJogStopClicked();
 
 protected:
     void showEvent(QShowEvent *se);
@@ -243,6 +221,8 @@ private:
     GUI::PositionDisplay *m_machineDisplay = nullptr;
     GUI::StatusWidget    *m_statusWidget   = nullptr;
     GUI::ConsoleTab      *m_consoleTab     = nullptr;
+    GUI::JogWidget       *m_jogWidget      = nullptr;
+
     QTabWidget           *m_tabWidget      = nullptr;
     
     QString m_settingsFileName;
