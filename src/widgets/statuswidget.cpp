@@ -92,7 +92,7 @@ void StatusWidget::setStatus(StatusType st)
         setColors("yellow", "black");
         break;
     case StatusType::CHECK:
-        m_statusTxt->setText("QUEUE");
+        m_statusTxt->setText("CHECK");
         setColors("palette(button)", "palette(text)");
         break;
     case StatusType::DOOR:        
@@ -100,7 +100,7 @@ void StatusWidget::setStatus(StatusType st)
         setColors("red", "white");
         break;                
     case StatusType::JOG:        
-        m_statusTxt->setText("DOOR");
+        m_statusTxt->setText("JOG");
         setColors("lime", "black");
         break;                   
     case StatusType::NOTCONNECTED:
