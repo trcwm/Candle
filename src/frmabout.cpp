@@ -6,20 +6,21 @@
 #include "frmabout.h"
 #include "ui_frmabout.h"
 
-frmAbout::frmAbout(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::frmAbout)
+frmAbout::frmAbout(QWidget *parent) : QDialog(parent),
+                                      ui(new Ui::frmAbout)
 {
     ui->setupUi(this);
 
     ui->lblAbout->setText(ui->lblAbout->text().arg(qApp->applicationVersion()));
-
-    //QFile file(qApp->applicationDirPath() + "/LICENSE");
     QFile file(":/LICENSE");
 
-    if (file.open(QIODevice::ReadOnly)) {
+    if (file.open(QIODevice::ReadOnly))
+    {
         ui->txtLicense->setPlainText(file.readAll());
     }
+
+    const QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    ui->txtLicense->setFont(fixedFont);
 }
 
 frmAbout::~frmAbout()
