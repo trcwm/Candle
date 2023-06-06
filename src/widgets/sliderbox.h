@@ -58,8 +58,6 @@ private slots:
     void onSliderActionTriggered(int action);
     void onSliderValueChanged(int value);
 
-    void onCheckboxToggled(bool checked);
-
 private:
     void createWidget();
 

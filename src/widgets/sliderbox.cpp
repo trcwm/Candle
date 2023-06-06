@@ -46,6 +46,7 @@ void SliderBox::createWidget()
     connect(m_slider, &Slider::actionTriggered, this, &SliderBox::onSliderActionTriggered);
     connect(m_slider, &Slider::valueChanged, this, &SliderBox::onSliderValueChanged);
     connect(m_txtValue, &QSpinBox::editingFinished, this, &SliderBox::onTxtValueEditingFinished);
+    connect(m_checkbox, &QCheckBox::toggled, this, &SliderBox::toggled);
 }
 
 
