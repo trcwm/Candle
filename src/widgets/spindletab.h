@@ -13,11 +13,6 @@ class SpindleTab : public QWidget
 public:
     SpindleTab(QWidget *parent = nullptr);
 
-    auto spindleValue() const 
-    {
-        return m_sliderBox->value();
-    }
-
     SliderBox* slider()
     {
         return m_sliderBox;
@@ -63,7 +58,7 @@ protected:
 
     SliderBox   *m_sliderBox{nullptr};
     StyledToolButton *m_button{nullptr};
-    QHBoxLayout *m_layout{nullptr};
+    QVBoxLayout *m_layout{nullptr};
 };
 
 };

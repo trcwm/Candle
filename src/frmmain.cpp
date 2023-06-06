@@ -2685,7 +2685,7 @@ void frmMain::onCmdSpindleClicked(bool checked)
     }
     else
     {
-        sendCommand(checked ? QString("M3 S%1").arg(m_spindleTab->spindleValue()) : "M5", -1, m_settings->showUICommands());
+        sendCommand(checked ? QString("M3 S%1").arg(m_spindleTab->value()) : "M5", -1, m_settings->showUICommands());
     }
 }
 
