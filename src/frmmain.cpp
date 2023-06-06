@@ -24,7 +24,7 @@
 #include <QElapsedTimer>
 
 #include "widgets/positiondisplay.h"
-#include "widgets/consoletab.h"
+
 #include "frmmain.h"
 #include "ui_frmmain.h"
 
@@ -90,37 +90,38 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     }
 
     // Setting up slider boxes
-    ui->slbFeedOverride->setRatio(1);
-    ui->slbFeedOverride->setMinimum(10);
-    ui->slbFeedOverride->setMaximum(200);
-    ui->slbFeedOverride->setCurrentValue(100);
-    ui->slbFeedOverride->setTitle(tr("Feed rate:"));
-    ui->slbFeedOverride->setSuffix("%");
-    connect(ui->slbFeedOverride, SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
-    connect(ui->slbFeedOverride, &SliderBox::toggled, [=]
+    m_overrideTab = new GUI::OverrideTab();
+    m_overrideTab->feed()->setRatio(1);
+    m_overrideTab->feed()->setMinimum(10);
+    m_overrideTab->feed()->setMaximum(200);
+    m_overrideTab->feed()->setCurrentValue(100);
+    m_overrideTab->feed()->setTitle(tr("Feed rate:"));
+    m_overrideTab->feed()->setSuffix("%");
+    //connect(m_overrideTab->feed(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+    connect(m_overrideTab->feed(), &SliderBox::toggled, [=]
             { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
-    connect(ui->slbFeedOverride, &SliderBox::valueChanged, [=]
-            { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
-
-    ui->slbRapidOverride->setRatio(50);
-    ui->slbRapidOverride->setMinimum(25);
-    ui->slbRapidOverride->setMaximum(100);
-    ui->slbRapidOverride->setCurrentValue(100);
-    ui->slbRapidOverride->setTitle(tr("Rapid speed:"));
-    ui->slbRapidOverride->setSuffix("%");
-    connect(ui->slbRapidOverride, SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
-    connect(ui->slbRapidOverride, &SliderBox::toggled, [=]
-            { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
-    connect(ui->slbRapidOverride, &SliderBox::valueChanged, [=]
+    connect(m_overrideTab->feed(), &SliderBox::valueChanged, [=]
             { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
 
-    ui->slbSpindleOverride->setRatio(1);
-    ui->slbSpindleOverride->setMinimum(50);
-    ui->slbSpindleOverride->setMaximum(200);
-    ui->slbSpindleOverride->setCurrentValue(100);
-    ui->slbSpindleOverride->setTitle(tr("Spindle speed:"));
-    ui->slbSpindleOverride->setSuffix("%");
-    connect(ui->slbSpindleOverride, SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+    m_overrideTab->rapid()->setRatio(50);
+    m_overrideTab->rapid()->setMinimum(25);
+    m_overrideTab->rapid()->setMaximum(100);
+    m_overrideTab->rapid()->setCurrentValue(100);
+    m_overrideTab->rapid()->setTitle(tr("Rapid speed:"));
+    m_overrideTab->rapid()->setSuffix("%");
+    //connect(m_overrideTab->rapid(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+    connect(m_overrideTab->rapid(), &SliderBox::toggled, [=]
+            { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
+    connect(m_overrideTab->rapid(), &SliderBox::valueChanged, [=]
+            { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
+
+    m_overrideTab->spindle()->setRatio(1);
+    m_overrideTab->spindle()->setMinimum(50);
+    m_overrideTab->spindle()->setMaximum(200);
+    m_overrideTab->spindle()->setCurrentValue(100);
+    m_overrideTab->spindle()->setTitle(tr("Spindle speed:"));
+    m_overrideTab->spindle()->setSuffix("%");
+    //connect(m_overrideTab->spindle(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
 
     m_originDrawer = new OriginDrawer();
     m_codeDrawer = new GcodeDrawer();
@@ -264,6 +265,7 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 
     m_tabWidget = new QTabWidget();
     m_tabWidget->addTab(m_consoleTab, tr("Console"));
+    m_tabWidget->addTab(m_overrideTab, tr("Override"));
 
     displayBoxLayout->addWidget(m_tabWidget);
     
@@ -365,14 +367,14 @@ void frmMain::loadSettings()
     ui->slbSpindle->setMaximum(m_settings->spindleSpeedMax());
     ui->slbSpindle->setValue(set.value("spindleSpeed", 100).toInt());
 
-    ui->slbFeedOverride->setChecked(set.value("feedOverride", false).toBool());
-    ui->slbFeedOverride->setValue(set.value("feedOverrideValue", 100).toInt());
+    m_overrideTab->feed()->setChecked(set.value("feedOverride", false).toBool());
+    m_overrideTab->feed()->setValue(set.value("feedOverrideValue", 100).toInt());
 
-    ui->slbRapidOverride->setChecked(set.value("rapidOverride", false).toBool());
-    ui->slbRapidOverride->setValue(set.value("rapidOverrideValue", 100).toInt());
+    m_overrideTab->rapid()->setChecked(set.value("rapidOverride", false).toBool());
+    m_overrideTab->rapid()->setValue(set.value("rapidOverrideValue", 100).toInt());
 
-    ui->slbSpindleOverride->setChecked(set.value("spindleOverride", false).toBool());
-    ui->slbSpindleOverride->setValue(set.value("spindleOverrideValue", 100).toInt());
+    m_overrideTab->spindle()->setChecked(set.value("spindleOverride", false).toBool());
+    m_overrideTab->spindle()->setValue(set.value("spindleOverrideValue", 100).toInt());
 
     m_settings->setUnits(set.value("units", 0).toInt());
     m_storedX = set.value("storedX", 0).toDouble();
@@ -462,7 +464,6 @@ void frmMain::loadSettings()
     // Restore panels state
     ui->grpHeightMap->setChecked(set.value("heightmapPanel", true).toBool());
     ui->grpSpindle->setChecked(set.value("spindlePanel", true).toBool());
-    ui->grpOverriding->setChecked(set.value("feedPanel", true).toBool());
 
     // Restore last commands list
     // FIXME: console
@@ -520,7 +521,6 @@ void frmMain::saveSettings()
     set.setValue("formSettingsSize", m_settings->size());
     set.setValue("heightmapPanel", ui->grpHeightMap->isChecked());
     set.setValue("spindlePanel", ui->grpSpindle->isChecked());
-    set.setValue("feedPanel", ui->grpOverriding->isChecked());
     
     //FIXME: Jog
     //set.setValue("keyboardControl", ui->chkKeyboardControl->isChecked());
@@ -542,19 +542,18 @@ void frmMain::saveSettings()
     set.setValue("fontSize", m_settings->fontSize());
     set.setValue("consoleMinHeight", m_consoleTab->minimumHeight());
 
-    set.setValue("feedOverride", ui->slbFeedOverride->isChecked());
-    set.setValue("feedOverrideValue", ui->slbFeedOverride->value());
-    set.setValue("rapidOverride", ui->slbRapidOverride->isChecked());
-    set.setValue("rapidOverrideValue", ui->slbRapidOverride->value());
-    set.setValue("spindleOverride", ui->slbSpindleOverride->isChecked());
-    set.setValue("spindleOverrideValue", ui->slbSpindleOverride->value());
+    set.setValue("feedOverride", m_overrideTab->feed()->isChecked());
+    set.setValue("feedOverrideValue", m_overrideTab->feed()->value());
+    set.setValue("rapidOverride", m_overrideTab->rapid()->isChecked());
+    set.setValue("rapidOverrideValue", m_overrideTab->rapid()->value());
+    set.setValue("spindleOverride", m_overrideTab->spindle()->isChecked());
+    set.setValue("spindleOverrideValue", m_overrideTab->spindle()->value());
 
     foreach (StyledToolButton *button, findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
         int i = button->objectName().right(1).toInt();
         set.setValue(QString("userCommands%1").arg(i), m_settings->userCommands(i));
     }
-
 
     // FIXME:
     set.setValue("jogSteps", m_jogWidget->getStepItems());
@@ -642,16 +641,6 @@ void frmMain::updateControlsState()
     ui->chkTestMode->setEnabled(portOpened && !m_processingFile);
     m_buttonBar->enableControlButtons(!m_processingFile);
 
-#if 0    
-    ui->cmdHome->setEnabled(!m_processingFile);
-    ui->cmdTouch->setEnabled(!m_processingFile);
-    ui->cmdZeroXY->setEnabled(!m_processingFile);
-    ui->cmdZeroZ->setEnabled(!m_processingFile);
-    ui->cmdRestoreOrigin->setEnabled(!m_processingFile);
-    ui->cmdSafePosition->setEnabled(!m_processingFile);
-    ui->cmdUnlock->setEnabled(!m_processingFile);
-#endif
-
     ui->cmdSpindle->setEnabled(!m_processingFile);
 
     ui->actFileNew->setEnabled(!m_processingFile);
@@ -713,12 +702,6 @@ void frmMain::updateControlsState()
     // FIXME: jog
     //ui->grpHeightMapSettings->setEnabled(!m_processingFile && !ui->chkKeyboardControl->isChecked());
     ui->grpHeightMapSettings->setEnabled(!m_processingFile);
-
-    // FIXME: jog
-    //ui->cboJogStep->setEditable(!ui->chkKeyboardControl->isChecked());
-    //ui->cboJogFeed->setEditable(!ui->chkKeyboardControl->isChecked());
-    //ui->cboJogStep->setStyleSheet(QString("font-size: %1").arg(m_settings->fontSize()));
-    //ui->cboJogFeed->setStyleSheet(ui->cboJogStep->styleSheet());
 
     ui->chkTestMode->setVisible(!m_heightMapMode);
     ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1] && !m_heightMapMode);
@@ -1014,7 +997,6 @@ void frmMain::onSerialPortReadyRead()
             }
 
             // Update work coordinates
-            //int prec = m_settings->units() == 0 ? 3 : 4;
             
             auto mpos = m_machineDisplay->getPosition();
             m_workDisplay->setPosition(mpos - workOffset);
@@ -1069,13 +1051,13 @@ void frmMain::onSerialPortReadyRead()
             static QRegExp ov("Ov:([^,]*),([^,]*),([^,^>^|]*)");
             if (ov.indexIn(data) != -1)
             {
-                updateOverride(ui->slbFeedOverride, ov.cap(1).toInt(), 0x91);
-                updateOverride(ui->slbSpindleOverride, ov.cap(3).toInt(), 0x9a);
+                updateOverride(m_overrideTab->feed(), ov.cap(1).toInt(), 0x91);
+                updateOverride(m_overrideTab->spindle(), ov.cap(3).toInt(), 0x9a);
 
                 int rapid = ov.cap(2).toInt();
-                ui->slbRapidOverride->setCurrentValue(rapid);
+                m_overrideTab->rapid()->setCurrentValue(rapid);
 
-                int target = ui->slbRapidOverride->isChecked() ? ui->slbRapidOverride->value() : 100;
+                int target = m_overrideTab->rapid()->isChecked() ? m_overrideTab->rapid()->value() : 100;
 
                 if (rapid != target)
                     switch (target)
@@ -1962,12 +1944,17 @@ QTime frmMain::updateProgramEstimatedTime(QList<LineSegment *> lines)
         double length = (ls->getEnd() - ls->getStart()).length();
 
         if (!qIsNaN(length) && !qIsNaN(ls->getSpeed()) && ls->getSpeed() != 0)
+        {
+            auto feed  = m_overrideTab->feed();
+            auto rapid = m_overrideTab->rapid();
+
             time +=
-                length / ((ui->slbFeedOverride->isChecked() && !ls->isFastTraverse())
-                              ? (ls->getSpeed() * ui->slbFeedOverride->value() / 100)
-                          : (ui->slbRapidOverride->isChecked() && ls->isFastTraverse())
-                              ? (ls->getSpeed() * ui->slbRapidOverride->value() / 100)
+                length / ((feed->isChecked() && !ls->isFastTraverse())
+                              ? (ls->getSpeed() * feed->value() / 100)
+                          : (rapid->isChecked() && ls->isFastTraverse())
+                              ? (ls->getSpeed() * rapid->value() / 100)
                               : ls->getSpeed()); // TODO: Update for rapid override
+        }
 
         //        qDebug() << "length/time:" << length << ((ui->chkFeedOverride->isChecked() && !ls->isFastTraverse())
         //                                                 ? (ls->getSpeed() * ui->txtFeed->value() / 100) : ls->getSpeed())
@@ -2433,7 +2420,6 @@ void frmMain::applySettings()
 
     ui->grpHeightMap->setVisible(m_settings->panelHeightmap());
     ui->grpSpindle->setVisible(m_settings->panelSpindle());
-    ui->grpOverriding->setVisible(m_settings->panelOverriding());
 
     // FIXME: console
     //ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
@@ -3026,24 +3012,6 @@ QString frmMain::feedOverride(QString command)
     //        ui->txtFeed->value() : 100, &m_originalFeed);
 
     return command;
-}
-
-void frmMain::on_grpOverriding_toggled(bool checked)
-{
-    if (checked)
-    {
-        ui->grpOverriding->setTitle(tr("Overriding"));
-    }
-    else if (ui->slbFeedOverride->isChecked() | ui->slbRapidOverride->isChecked() | ui->slbSpindleOverride->isChecked())
-    {
-        ui->grpOverriding->setTitle(tr("Overriding") + QString(tr(" (%1/%2/%3)"))
-                                                           .arg(ui->slbFeedOverride->isChecked() ? QString::number(ui->slbFeedOverride->value()) : "-")
-                                                           .arg(ui->slbRapidOverride->isChecked() ? QString::number(ui->slbRapidOverride->value()) : "-")
-                                                           .arg(ui->slbSpindleOverride->isChecked() ? QString::number(ui->slbSpindleOverride->value()) : "-"));
-    }
-    updateLayouts();
-
-    ui->widgetFeed->setVisible(checked);
 }
 
 void frmMain::on_grpSpindle_toggled(bool checked)
@@ -4293,15 +4261,6 @@ void frmMain::onCmdUserClicked(bool checked)
     {
         sendCommand(cmd.trimmed(), -1, m_settings->showUICommands());
     }
-}
-
-void frmMain::onOverridingToggled(bool checked)
-{
-    Q_UNUSED(checked);
-
-    ui->grpOverriding->setProperty("overrided", ui->slbFeedOverride->isChecked() || ui->slbRapidOverride->isChecked() || ui->slbSpindleOverride->isChecked());
-    style()->unpolish(ui->grpOverriding);
-    ui->grpOverriding->ensurePolished();
 }
 
 void frmMain::updateOverride(SliderBox *slider, int value, char command)

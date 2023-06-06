@@ -1086,8 +1086,8 @@ QSlider::handle:horizontal:hover {
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>228</width>
-            <height>348</height>
+            <width>210</width>
+            <height>258</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -1344,63 +1344,6 @@ QSlider::handle:horizontal:hover {
              </layout>
             </widget>
            </item>
-           <item>
-            <widget class="GroupBox" name="grpOverriding">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="title">
-              <string>Overriding</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="overrided" stdset="0">
-              <bool>false</bool>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_14">
-              <property name="leftMargin">
-               <number>8</number>
-              </property>
-              <property name="topMargin">
-               <number>8</number>
-              </property>
-              <property name="rightMargin">
-               <number>8</number>
-              </property>
-              <property name="bottomMargin">
-               <number>8</number>
-              </property>
-              <item>
-               <widget class="QWidget" name="widgetFeed" native="true">
-                <layout class="QVBoxLayout" name="verticalLayout_22">
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="SliderBox" name="slbFeedOverride" native="true"/>
-                 </item>
-                 <item>
-                  <widget class="SliderBox" name="slbRapidOverride" native="true"/>
-                 </item>
-                 <item>
-                  <widget class="SliderBox" name="slbSpindleOverride" native="true"/>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
           </layout>
          </widget>
         </widget>
@@ -1592,7 +1535,6 @@ QSlider::handle:horizontal:hover {
   <tabstop>cmdHeightMapMode</tabstop>
   <tabstop>grpSpindle</tabstop>
   <tabstop>cmdSpindle</tabstop>
-  <tabstop>grpOverriding</tabstop>
   <tabstop>grpHeightMap</tabstop>
  </tabstops>
  <resources>

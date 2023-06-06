@@ -1,12 +1,13 @@
-#ifndef SLIDERBOX_H
-#define SLIDERBOX_H
+#pragma once 
 
 #include <QWidget>
 #include <QTimer>
+#include <QLabel>
+#include <QSpinBox>
+#include <QCheckBox>
+#include <QBoxLayout>
 
-namespace Ui {
-class SliderBox;
-}
+#include "slider.h"
 
 class SliderBox : public QWidget
 {
@@ -53,16 +54,21 @@ signals:
 private slots:
     void onTimerValueChanged();
 
-    void on_txtValue_editingFinished();
+    void onTxtValueEditingFinished();
+    void onSliderActionTriggered(int action);
+    void onSliderValueChanged(int value);
 
-    void on_sliValue_actionTriggered(int action);
-
-    void on_sliValue_valueChanged(int value);
-
-    void on_chkTitle_toggled(bool checked);
+    void onCheckboxToggled(bool checked);
 
 private:
-    Ui::SliderBox *ui;
+    void createWidget();
+
+    QVBoxLayout *m_mainLayout{nullptr};
+    QHBoxLayout *m_horizontalLayout{nullptr};
+    Slider      *m_slider{nullptr};
+    QSpinBox    *m_txtValue{nullptr};
+    QLabel      *m_title{nullptr};
+    QCheckBox   *m_checkbox{nullptr};
 
     bool m_isCheckable;
     int m_ratio;
@@ -73,4 +79,3 @@ private:
     QTimer m_timerValueChanged;
 };
 
-#endif // SLIDERBOX_H

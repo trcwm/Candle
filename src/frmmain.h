@@ -40,6 +40,7 @@
 #include "widgets/positiondisplay.h"
 #include "widgets/statuswidget.h"
 #include "widgets/consoletab.h"
+#include "widgets/overridetab.h"
 #include "widgets/jogwidget.h"
 #include "widgets/buttonbar.h"
 
@@ -110,7 +111,6 @@ private slots:
     void onConsoleResized(QSize size);
     void onPanelsSizeChanged(QSize size);
     void onCmdUserClicked(bool checked);
-    void onOverridingToggled(bool checked);
     void onActSendFromLineTriggered();
 
     void on_actFileExit_triggered();
@@ -146,7 +146,7 @@ private slots:
     void on_cmdLeft_clicked();
     void on_cmdIsometric_clicked();
     void on_actAbout_triggered();
-    void on_grpOverriding_toggled(bool checked);
+    //void on_grpOverriding_toggled(bool checked);
     void on_grpSpindle_toggled(bool checked);
     //void on_grpUserCommands_toggled(bool checked);
     void on_chkKeyboardControl_toggled(bool checked);
@@ -225,6 +225,7 @@ private:
     GUI::PositionDisplay *m_machineDisplay = nullptr;
     GUI::StatusWidget    *m_statusWidget   = nullptr;
     GUI::ConsoleTab      *m_consoleTab     = nullptr;
+    GUI::OverrideTab     *m_overrideTab    = nullptr;
     GUI::JogWidget       *m_jogWidget      = nullptr;
     GUI::ButtonBar       *m_buttonBar      = nullptr;
     QTabWidget           *m_tabWidget      = nullptr;

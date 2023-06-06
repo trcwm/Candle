@@ -1,20 +1,17 @@
+
 #include "sliderbox.h"
-#include "ui_sliderbox.h"
 
 SliderBox::SliderBox(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::SliderBox)
+    QWidget(parent)
 {
-    ui->setupUi(this);    
+    createWidget();
 
-    ui->chkTitle->setVisible(false);
-
-    this->setCheckable(true);
-    this->setRatio(1);
-    this->setMinimum(0);
-    this->setMaximum(10000);
-    this->setValue(0);
-    this->setCurrentValue(0);
+    setCheckable(true);
+    setRatio(1);
+    setMinimum(0);
+    setMaximum(10000);
+    setValue(0);
+    setCurrentValue(0);
 
     connect(&m_timerValueChanged, SIGNAL(timeout()), this, SLOT(onTimerValueChanged()));
     m_timerValueChanged.setInterval(250);
@@ -22,18 +19,45 @@ SliderBox::SliderBox(QWidget *parent) :
 
 SliderBox::~SliderBox()
 {
-    delete ui;
 }
+
+void SliderBox::createWidget()
+{
+    m_mainLayout = new QVBoxLayout();
+    m_horizontalLayout = new QHBoxLayout();
+
+    m_checkbox = new QCheckBox();
+    m_horizontalLayout->addWidget(m_checkbox);
+
+    m_title = new QLabel("");
+    m_horizontalLayout->addWidget(m_title);
+
+    m_txtValue = new QSpinBox();
+    m_horizontalLayout->addWidget(m_txtValue, 1);
+
+    m_slider = new Slider();
+    m_slider->setOrientation(Qt::Horizontal);
+
+    m_mainLayout->addLayout(m_horizontalLayout);
+    m_mainLayout->addWidget(m_slider);
+    
+    setLayout(m_mainLayout);
+
+    connect(m_slider, &Slider::actionTriggered, this, &SliderBox::onSliderActionTriggered);
+    connect(m_slider, &Slider::valueChanged, this, &SliderBox::onSliderValueChanged);
+    connect(m_txtValue, &QSpinBox::editingFinished, this, &SliderBox::onTxtValueEditingFinished);
+}
+
 
 int SliderBox::value()
 {
-    return ui->txtValue->value();
+    return m_txtValue->value();
 }
 
 void SliderBox::setValue(int value)
 {
-    ui->txtValue->setValue(value);
-    ui->sliValue->setValue(value / m_ratio);
+    m_txtValue->setValue(value);
+    m_slider->setValue(value / m_ratio);
 }
 
 int SliderBox::currentValue()
@@ -45,18 +69,18 @@ void SliderBox::setCurrentValue(int value)
 {
     m_currentValue = value;
 
-    ui->sliValue->setCurrentValue(value / m_ratio);
-    ui->txtValue->setStyleSheet(value == ui->txtValue->value() || !this->isChecked() ? "color: palette(text);" : "color: red;");
+    m_slider->setCurrentValue(value / m_ratio);
+    m_txtValue->setStyleSheet(value == m_txtValue->value() || !isChecked() ? "color: palette(text);" : "color: red;");
 }
 
 int SliderBox::sliderPosition()
 {
-    return ui->sliValue->sliderPosition();
+    return m_slider->sliderPosition();
 }
 
 void SliderBox::setSliderPosition(int position)
 {
-    ui->sliValue->setSliderPosition(position);
+    m_slider->setSliderPosition(position);
 }
 
 bool SliderBox::isCheckable() const
@@ -68,18 +92,17 @@ void SliderBox::setCheckable(bool checkable)
 {
     m_isCheckable = checkable;
 
-    ui->chkTitle->setVisible(checkable);
-    ui->lblTitle->setVisible(!checkable);
+    m_checkbox->setVisible(checkable);
 }
 
 bool SliderBox::isChecked()
 {
-    return ui->chkTitle->isChecked();
+    return m_checkbox->isChecked();
 }
 
 void SliderBox::setChecked(bool checked)
 {
-    ui->chkTitle->setChecked(checked);
+    m_checkbox->setChecked(checked);
 }
 
 int SliderBox::ratio() const
@@ -92,24 +115,27 @@ void SliderBox::setRatio(int ratio)
     m_ratio = ratio;
 }
 
-void SliderBox::on_txtValue_editingFinished()
+void SliderBox::onTxtValueEditingFinished()
 {
-    ui->sliValue->setValue(ui->txtValue->value() / this->ratio());
+    m_slider->setValue(m_txtValue->value() / ratio());
     emit valueUserChanged();
 }
 
-void SliderBox::on_sliValue_actionTriggered(int action)
+void SliderBox::onSliderActionTriggered(int action)
 {
-    (void)(action);
-    ui->txtValue->setValue(ui->sliValue->sliderPosition() * this->ratio());
+    Q_UNUSED(action);
+
+    m_txtValue->setValue(m_slider->sliderPosition() * ratio());
     emit valueUserChanged();
 }
 
-void SliderBox::on_sliValue_valueChanged(int value)
+void SliderBox::onSliderValueChanged(int value)
 {
-    (void)(value);
-    if (this->isChecked()) {
-        ui->txtValue->setStyleSheet("color: red;");
+    Q_UNUSED(value);
+
+    if (isChecked()) 
+    {
+        m_txtValue->setStyleSheet("color: red;");
         m_timerValueChanged.start();
     }
 }
@@ -129,29 +155,28 @@ void SliderBox::setMaximum(int maximum)
 {
     m_maximum = maximum;
 
-    ui->txtValue->setMaximum(maximum);
-    ui->sliValue->setMaximum(maximum / m_ratio);
+    m_txtValue->setMaximum(maximum);
+    m_slider->setMaximum(maximum / m_ratio);
 }
 
 QString SliderBox::suffix()
 {
-    return ui->txtValue->suffix();
+    return m_txtValue->suffix();
 }
 
 void SliderBox::setSuffix(QString suffix)
 {
-    ui->txtValue->setSuffix(suffix);
+    m_txtValue->setSuffix(suffix);
 }
 
 QString SliderBox::title()
 {
-    return ui->chkTitle->text();
+    return m_title->text();
 }
 
 void SliderBox::setTitle(QString title)
 {
-    ui->chkTitle->setText(title);
-    ui->lblTitle->setText(title);
+    m_title->setText(title);
 }
 
 int SliderBox::minimum() const
@@ -163,11 +188,11 @@ void SliderBox::setMinimum(int minimum)
 {
     m_minimum = minimum;
 
-    ui->txtValue->setMinimum(minimum);
-    ui->sliValue->setMinimum(minimum / m_ratio);
+    m_txtValue->setMinimum(minimum);
+    m_slider->setMinimum(minimum / m_ratio);
 }
 
-void SliderBox::on_chkTitle_toggled(bool checked)
+void SliderBox::onCheckboxToggled(bool checked)
 {
     emit toggled(checked);
 }
