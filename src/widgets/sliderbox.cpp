@@ -192,8 +192,3 @@ void SliderBox::setMinimum(int minimum)
     m_txtValue->setMinimum(minimum);
     m_slider->setMinimum(minimum / m_ratio);
 }
-
-void SliderBox::onCheckboxToggled(bool checked)
-{
-    emit toggled(checked);
-}

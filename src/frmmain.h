@@ -41,6 +41,7 @@
 #include "widgets/statuswidget.h"
 #include "widgets/consoletab.h"
 #include "widgets/overridetab.h"
+#include "widgets/spindletab.h"
 #include "widgets/jogwidget.h"
 #include "widgets/buttonbar.h"
 
@@ -132,7 +133,7 @@ private slots:
     void onCmdUnlock_clicked();
     void onCmdSafePosition_clicked();
     
-    void on_cmdSpindle_toggled(bool checked);
+    void onCmdSpindleToggled(bool checked);
     void on_chkTestMode_clicked(bool checked);
     void on_cmdFilePause_clicked(bool checked);
     void on_cmdFileReset_clicked();
@@ -146,9 +147,6 @@ private slots:
     void on_cmdLeft_clicked();
     void on_cmdIsometric_clicked();
     void on_actAbout_triggered();
-    //void on_grpOverriding_toggled(bool checked);
-    void on_grpSpindle_toggled(bool checked);
-    //void on_grpUserCommands_toggled(bool checked);
     void on_chkKeyboardControl_toggled(bool checked);
     void on_tblProgram_customContextMenuRequested(const QPoint &pos);
     void on_splitter_splitterMoved(int pos, int index);
@@ -173,7 +171,7 @@ private slots:
     void on_cmdHeightMapCreate_clicked();
     void on_cmdHeightMapBorderAuto_clicked();
     void on_cmdFileAbort_clicked();
-    void on_cmdSpindle_clicked(bool checked);   
+    void onCmdSpindleClicked(bool checked);
 
     void onJogVectorChanged();
     void onJogStopClicked();
@@ -226,6 +224,7 @@ private:
     GUI::StatusWidget    *m_statusWidget   = nullptr;
     GUI::ConsoleTab      *m_consoleTab     = nullptr;
     GUI::OverrideTab     *m_overrideTab    = nullptr;
+    GUI::SpindleTab      *m_spindleTab     = nullptr;
     GUI::JogWidget       *m_jogWidget      = nullptr;
     GUI::ButtonBar       *m_buttonBar      = nullptr;
     QTabWidget           *m_tabWidget      = nullptr;

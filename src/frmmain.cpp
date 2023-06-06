@@ -89,6 +89,10 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
         connect(button, SIGNAL(clicked(bool)), this, SLOT(onCmdUserClicked(bool)));
     }
 
+    m_spindleTab = new GUI::SpindleTab();
+    connect(m_spindleTab, &GUI::SpindleTab::toggled, this, &frmMain::onCmdSpindleToggled);
+    connect(m_spindleTab, &GUI::SpindleTab::clicked, this, &frmMain::onCmdSpindleClicked);
+
     // Setting up slider boxes
     m_overrideTab = new GUI::OverrideTab();
     m_overrideTab->feed()->setRatio(1);
@@ -211,15 +215,11 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 #endif
 
     // Setting up spindle slider box
-    ui->slbSpindle->setTitle(tr("Speed:"));
-    ui->slbSpindle->setCheckable(false);
-    ui->slbSpindle->setChecked(true);
-    connect(ui->slbSpindle, &SliderBox::valueUserChanged, [=]
-            { m_updateSpindleSpeed = true; });
-    connect(ui->slbSpindle, &SliderBox::valueChanged, [=]
-            {
-        if (!ui->grpSpindle->isChecked() && ui->cmdSpindle->isChecked())
-            ui->grpSpindle->setTitle(tr("Spindle") + QString(tr(" (%1)")).arg(ui->slbSpindle->value())); });
+    connect(m_spindleTab->slider(), &SliderBox::valueUserChanged, [=]        
+        { 
+            m_updateSpindleSpeed = true; 
+        }
+    );
 
     // Setup serial port
     m_serialPort.setParity(QSerialPort::NoParity);
@@ -266,7 +266,8 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_tabWidget = new QTabWidget();
     m_tabWidget->addTab(m_consoleTab, tr("Console"));
     m_tabWidget->addTab(m_overrideTab, tr("Override"));
-
+    m_tabWidget->addTab(m_spindleTab, tr("Spindle"));
+    
     displayBoxLayout->addWidget(m_tabWidget);
     
     ui->verticalLayout_2->addLayout(displayBoxLayout);
@@ -362,10 +363,9 @@ void frmMain::loadSettings()
 
     ui->chkAutoScroll->setChecked(set.value("autoScroll", false).toBool());
 
-    ui->slbSpindle->setRatio(100);
-    ui->slbSpindle->setMinimum(m_settings->spindleSpeedMin());
-    ui->slbSpindle->setMaximum(m_settings->spindleSpeedMax());
-    ui->slbSpindle->setValue(set.value("spindleSpeed", 100).toInt());
+    m_spindleTab->setMinSpindleSpeed(m_settings->spindleSpeedMin());
+    m_spindleTab->setMaxSpindleSpeed(m_settings->spindleSpeedMax());
+    m_spindleTab->setValue(set.value("spindleSpeed", 100).toInt());
 
     m_overrideTab->feed()->setChecked(set.value("feedOverride", false).toBool());
     m_overrideTab->feed()->setValue(set.value("feedOverrideValue", 100).toInt());
@@ -463,7 +463,6 @@ void frmMain::loadSettings()
 
     // Restore panels state
     ui->grpHeightMap->setChecked(set.value("heightmapPanel", true).toBool());
-    ui->grpSpindle->setChecked(set.value("spindlePanel", true).toBool());
 
     // Restore last commands list
     // FIXME: console
@@ -494,7 +493,7 @@ void frmMain::saveSettings()
     set.setValue("grayscaleSCode", m_settings->grayscaleSCode());
     set.setValue("drawModeVectors", m_settings->drawModeVectors());
 
-    set.setValue("spindleSpeed", ui->slbSpindle->value());
+    set.setValue("spindleSpeed", m_spindleTab->value());
     set.setValue("lineWidth", m_settings->lineWidth());
     set.setValue("arcLength", m_settings->arcLength());
     set.setValue("arcDegree", m_settings->arcDegree());
@@ -520,7 +519,6 @@ void frmMain::saveSettings()
     set.setValue("formGeometry", this->saveGeometry());
     set.setValue("formSettingsSize", m_settings->size());
     set.setValue("heightmapPanel", ui->grpHeightMap->isChecked());
-    set.setValue("spindlePanel", ui->grpSpindle->isChecked());
     
     //FIXME: Jog
     //set.setValue("keyboardControl", ui->chkKeyboardControl->isChecked());
@@ -630,7 +628,7 @@ void frmMain::updateControlsState()
 
     m_buttonBar->setEnabled(portOpened);
     m_buttonBar->enableUserButtons(portOpened && !m_processingFile);
-    ui->widgetSpindle->setEnabled(portOpened);
+    m_spindleTab->setEnabled(portOpened);
 
     m_jogWidget->setEnabled(portOpened && !m_processingFile);
     m_consoleTab->setEnabled(portOpened);
@@ -641,7 +639,7 @@ void frmMain::updateControlsState()
     ui->chkTestMode->setEnabled(portOpened && !m_processingFile);
     m_buttonBar->enableControlButtons(!m_processingFile);
 
-    ui->cmdSpindle->setEnabled(!m_processingFile);
+    m_spindleTab->enableButton(!m_processingFile);
 
     ui->actFileNew->setEnabled(!m_processingFile);
     ui->actFileOpen->setEnabled(!m_processingFile);
@@ -662,8 +660,8 @@ void frmMain::updateControlsState()
         m_statusWidget->setStatus(StatusType::NOTCONNECTED);
     }
 
-    this->setWindowTitle(m_programFileName.isEmpty() ? qApp->applicationDisplayName()
-                                                     : m_programFileName.mid(m_programFileName.lastIndexOf("/") + 1) + " - " + qApp->applicationDisplayName());
+    setWindowTitle(m_programFileName.isEmpty() ? qApp->applicationDisplayName()
+        : m_programFileName.mid(m_programFileName.lastIndexOf("/") + 1) + " - " + qApp->applicationDisplayName());
 
     // FIXME: jog
     //if (!m_processingFile)
@@ -779,9 +777,9 @@ void frmMain::sendCommand(QString command, int tableIndex, bool showInConsole)
     if (s.indexIn(command) != -1 && ca.tableIndex > -2)
     {
         int speed = s.cap(1).toInt();
-        if (ui->slbSpindle->value() != speed)
+        if (m_spindleTab->value() != speed)
         {
-            ui->slbSpindle->setValue(speed);
+            m_spindleTab->setValue(speed);
         }
     }
 
@@ -893,7 +891,7 @@ void frmMain::onSerialPortReadyRead()
                 ui->chkTestMode->setEnabled(status != StatusType::RUN && !m_processingFile);
                 ui->chkTestMode->setChecked(status == StatusType::CHECK);
                 ui->cmdFilePause->setChecked(status == StatusType::HOLD0 || status == StatusType::HOLD1 || status == StatusType::QUEUE);
-                ui->cmdSpindle->setEnabled(!m_processingFile || status == StatusType::HOLD0);
+                m_spindleTab->enableButton(!m_processingFile || status == StatusType::HOLD0);
 #ifdef WINDOWS
                 if (QSysInfo::windowsVersion() >= QSysInfo::WV_WINDOWS7)
                 {
@@ -1090,12 +1088,12 @@ void frmMain::onSerialPortReadyRead()
                     if (state.contains("S") || state.contains("C"))
                     {
                         m_timerToolAnimation.start(25, this);
-                        ui->cmdSpindle->setChecked(true);
+                        m_spindleTab->setChecked(true);
                     }
                     else
                     {
                         m_timerToolAnimation.stop();
-                        ui->cmdSpindle->setChecked(false);
+                        m_spindleTab->setChecked(false);
                     }
 
                     if (!pinState.isEmpty())
@@ -1105,7 +1103,7 @@ void frmMain::onSerialPortReadyRead()
                 else
                 {
                     m_timerToolAnimation.stop();
-                    ui->cmdSpindle->setChecked(false);
+                    m_spindleTab->setChecked(false);
                 }
                 ui->glwVisualizer->setPinState(pinState);
             }
@@ -1170,7 +1168,7 @@ void frmMain::onSerialPortReadyRead()
                         if (rx.indexIn(response) != -1)
                         {
                             double speed = toMetric(rx.cap(1).toDouble()); // RPM in imperial?
-                            ui->slbSpindle->setCurrentValue(speed);
+                            m_spindleTab->slider()->setCurrentValue(speed);
                         }
 
                         m_updateParserStatus = true;
@@ -1493,7 +1491,7 @@ void frmMain::onTimerConnection()
         if (m_updateSpindleSpeed)
         {
             m_updateSpindleSpeed = false;
-            sendCommand(QString("S%1").arg(ui->slbSpindle->value()), -2, m_settings->showUICommands());
+            sendCommand(QString("S%1").arg(m_spindleTab->value()), -2, m_settings->showUICommands());
         }
         if (m_updateParserStatus)
         {
@@ -1638,7 +1636,8 @@ void frmMain::timerEvent(QTimerEvent *te)
 {
     if (te->timerId() == m_timerToolAnimation.timerId())
     {
-        m_toolDrawer.rotate((m_spindleCW ? -40 : 40) * (double)(ui->slbSpindle->currentValue()) / (ui->slbSpindle->maximum()));
+        auto slider = m_spindleTab->slider();
+        m_toolDrawer.rotate((m_spindleCW ? -40 : 40) * (double)(slider->currentValue()) / (slider->maximum()));
     }
     else
     {
@@ -2052,7 +2051,7 @@ void frmMain::onActSendFromLineTriggered()
 
         QStringList commands;
 
-        commands.append(QString("M3 S%1").arg(qMax<double>(lastSegment->getSpindleSpeed(), ui->slbSpindle->value())));
+        commands.append(QString("M3 S%1").arg(qMax<double>(lastSegment->getSpindleSpeed(), m_spindleTab->value())));
 
         commands.append(QString("G21 G90 G0 X%1 Y%2")
                             .arg(firstSegment->getStart().x())
@@ -2413,13 +2412,12 @@ void frmMain::applySettings()
     ui->glwVisualizer->setColorBackground(m_settings->colors("VisualizerBackground"));
     ui->glwVisualizer->setColorText(m_settings->colors("VisualizerText"));
 
-    ui->slbSpindle->setMinimum(m_settings->spindleSpeedMin());
-    ui->slbSpindle->setMaximum(m_settings->spindleSpeedMax());
-
+    m_spindleTab->setMaxSpindleSpeed(m_settings->spindleSpeedMax());
+    m_spindleTab->setMinSpindleSpeed(m_settings->spindleSpeedMin());
+    
     ui->scrollArea->setVisible(m_settings->panelHeightmap() || m_settings->panelOverriding() || m_settings->panelJog() || m_settings->panelSpindle());
 
     ui->grpHeightMap->setVisible(m_settings->panelHeightmap());
-    ui->grpSpindle->setVisible(m_settings->panelSpindle());
 
     // FIXME: console
     //ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
@@ -2660,12 +2658,13 @@ void frmMain::onCmdSafePosition_clicked()
     }
 }
 
-void frmMain::on_cmdSpindle_toggled(bool checked)
+void frmMain::onCmdSpindleToggled(bool checked)
 {
-    ui->grpSpindle->setProperty("overrided", checked);
-    style()->unpolish(ui->grpSpindle);
-    ui->grpSpindle->ensurePolished();
+    m_spindleTab->setProperty("overrided", checked);
+    //style()->unpolish(m_spindleTab);
+    //m_spindleTab->ensurePolished();
 
+    #if 0
     if (checked)
     {
         if (!ui->grpSpindle->isChecked())
@@ -2675,9 +2674,10 @@ void frmMain::on_cmdSpindle_toggled(bool checked)
     {
         ui->grpSpindle->setTitle(tr("Spindle"));
     }
+    #endif
 }
 
-void frmMain::on_cmdSpindle_clicked(bool checked)
+void frmMain::onCmdSpindleClicked(bool checked)
 {
     if (ui->cmdFilePause->isChecked())
     {
@@ -2685,7 +2685,7 @@ void frmMain::on_cmdSpindle_clicked(bool checked)
     }
     else
     {
-        sendCommand(checked ? QString("M3 S%1").arg(ui->slbSpindle->value()) : "M5", -1, m_settings->showUICommands());
+        sendCommand(checked ? QString("M3 S%1").arg(m_spindleTab->spindleValue()) : "M5", -1, m_settings->showUICommands());
     }
 }
 
@@ -3014,21 +3014,6 @@ QString frmMain::feedOverride(QString command)
     return command;
 }
 
-void frmMain::on_grpSpindle_toggled(bool checked)
-{
-    if (checked)
-    {
-        ui->grpSpindle->setTitle(tr("Spindle"));
-    }
-    else if (ui->cmdSpindle->isChecked())
-    {
-        //        ui->grpSpindle->setTitle(tr("Spindle") + QString(tr(" (%1)")).arg(ui->txtSpindleSpeed->text()));
-        ui->grpSpindle->setTitle(tr("Spindle") + QString(tr(" (%1)")).arg(ui->slbSpindle->value()));
-    }
-    updateLayouts();
-
-    ui->widgetSpindle->setVisible(checked);
-}
 
 bool frmMain::eventFilter(QObject *obj, QEvent *event)
 {
@@ -3128,15 +3113,15 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
                 }
                 else if (keyEvent->key() == Qt::Key_0)
                 {
-                    on_cmdSpindle_clicked(!ui->cmdSpindle->isChecked());
+                    onCmdSpindleClicked(!m_spindleTab->isChecked());
                 }
                 else if (keyEvent->key() == Qt::Key_Asterisk)
                 {
-                    ui->slbSpindle->setSliderPosition(ui->slbSpindle->sliderPosition() + 1);
+                    m_spindleTab->incrementSlider();
                 }
                 else if (keyEvent->key() == Qt::Key_Slash)
                 {
-                    ui->slbSpindle->setSliderPosition(ui->slbSpindle->sliderPosition() - 1);
+                    m_spindleTab->decrementSlider();
                 }
             }
 
