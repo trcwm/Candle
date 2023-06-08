@@ -8,6 +8,11 @@ Supported functions:
 * Loading, editing, saving and sending of G-code files to cnc-machine.
 * Visualizing G-code files.
 
+Changes from the original Candle:
+* Made buttons and jog permantently accessible.
+* Moved console, override and spindle to a tab control.
+* Removed heightfield code.
+
 System requirements for running "CandleM":
 -------------------
 * Windows/Linux x86
