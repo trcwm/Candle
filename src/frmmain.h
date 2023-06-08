@@ -24,14 +24,14 @@
 #include "drawers/origindrawer.h"
 #include "drawers/gcodedrawer.h"
 #include "drawers/tooldrawer.h"
-#include "drawers/heightmapborderdrawer.h"
-#include "drawers/heightmapgriddrawer.h"
-#include "drawers/heightmapinterpolationdrawer.h"
+//#include "drawers/heightmapborderdrawer.h"
+//#include "drawers/heightmapgriddrawer.h"
+//#include "drawers/heightmapinterpolationdrawer.h"
 #include "drawers/shaderdrawable.h"
 #include "drawers/selectiondrawer.h"
 
 #include "tables/gcodetablemodel.h"
-#include "tables/heightmaptablemodel.h"
+//#include "tables/heightmaptablemodel.h"
 
 #include "utils/interpolation.h"
 
@@ -42,6 +42,7 @@
 #include "widgets/consoletab.h"
 #include "widgets/overridetab.h"
 #include "widgets/spindletab.h"
+//#include "widgets/heightmaptab.h"
 #include "widgets/jogwidget.h"
 #include "widgets/buttonbar.h"
 
@@ -94,7 +95,6 @@ public:
     double toolZPosition();
 
 private slots:
-    void updateHeightMapInterpolationDrawer(bool reset = false);
     void placeVisualizerButtons();
 
     void onSerialPortReadyRead();
@@ -110,7 +110,6 @@ private slots:
     void onCboCommandReturnPressed();
     void onTableCurrentChanged(QModelIndex idx1, QModelIndex idx2);
     void onConsoleResized(QSize size);
-    void onPanelsSizeChanged(QSize size);
     void onCmdUserClicked(bool checked);
     void onActSendFromLineTriggered();
 
@@ -151,25 +150,7 @@ private slots:
     void on_tblProgram_customContextMenuRequested(const QPoint &pos);
     void on_splitter_splitterMoved(int pos, int index);
     void on_actRecentClear_triggered();
-    void on_grpHeightMap_toggled(bool arg1);
-    void on_chkHeightMapBorderShow_toggled(bool checked);
-    void on_txtHeightMapBorderX_valueChanged(double arg1);
-    void on_txtHeightMapBorderWidth_valueChanged(double arg1);
-    void on_txtHeightMapBorderY_valueChanged(double arg1);
-    void on_txtHeightMapBorderHeight_valueChanged(double arg1);
-    void on_chkHeightMapGridShow_toggled(bool checked);
-    void on_txtHeightMapGridX_valueChanged(double arg1);
-    void on_txtHeightMapGridY_valueChanged(double arg1);
-    void on_txtHeightMapGridZBottom_valueChanged(double arg1);
-    void on_txtHeightMapGridZTop_valueChanged(double arg1);
-    void on_cmdHeightMapMode_toggled(bool checked);
-    void on_chkHeightMapInterpolationShow_toggled(bool checked);
-    void on_cmdHeightMapLoad_clicked();
-    void on_txtHeightMapInterpolationStepX_valueChanged(double arg1);
-    void on_txtHeightMapInterpolationStepY_valueChanged(double arg1);
-    void on_chkHeightMapUse_clicked(bool checked);
-    void on_cmdHeightMapCreate_clicked();
-    void on_cmdHeightMapBorderAuto_clicked();
+
     void on_cmdFileAbort_clicked();
     void onCmdSpindleClicked(bool checked);
 
@@ -199,17 +180,10 @@ private:
     GcodeDrawer *m_currentDrawer;
 
     ToolDrawer m_toolDrawer;
-    HeightMapBorderDrawer m_heightMapBorderDrawer;
-    HeightMapGridDrawer m_heightMapGridDrawer;
-    HeightMapInterpolationDrawer m_heightMapInterpolationDrawer;
-
     SelectionDrawer m_selectionDrawer;
 
     GCodeTableModel m_programModel;
     GCodeTableModel m_probeModel;
-    GCodeTableModel m_programHeightmapModel;
-
-    HeightMapTableModel m_heightMapModel;
 
     bool m_programLoading;
     bool m_settingsLoading;
@@ -227,15 +201,14 @@ private:
     GUI::SpindleTab      *m_spindleTab     = nullptr;
     GUI::JogWidget       *m_jogWidget      = nullptr;
     GUI::ButtonBar       *m_buttonBar      = nullptr;
+    
     QTabWidget           *m_tabWidget      = nullptr;
     
     QString m_settingsFileName;
     QString m_programFileName;
-    QString m_heightMapFileName;
     QString m_lastFolder;
 
     bool m_fileChanged = false;
-    bool m_heightMapChanged = false;
 
     QTimer m_timerConnection;
     QTimer m_timerStateQuery;
@@ -281,7 +254,6 @@ private:
     bool m_transferCompleted = false;
     bool m_fileEndSent = false;
 
-    bool m_heightMapMode;
     bool m_cellChanged;
 
     // Indices
@@ -320,7 +292,7 @@ private:
     void openPort();
     void sendCommand(QString command, int tableIndex = -1, bool showInConsole = true);
     void grblReset();
-    int bufferLength();
+    int  bufferLength();
     void sendNextFileCommands();
     void applySettings();
     void updateParser();
@@ -338,7 +310,6 @@ private:
     void updateLayouts();
     void updateRecentFilesMenu();
     void addRecentFile(QString fileName);
-    void addRecentHeightmap(QString fileName);
 
     // Convert inches to metric depending on
     // m_settings->units()
@@ -347,24 +318,16 @@ private:
 
     QRectF borderRectFromTextboxes();
     QRectF borderRectFromExtremes();
-    void updateHeightMapBorderDrawer();
-    bool updateHeightMapGrid();
-    void loadHeightMap(QString fileName);
-    bool saveHeightMap(QString fileName);
 
     GCodeTableModel *m_currentModel;
-    QList<LineSegment *> subdivideSegment(LineSegment *segment);
-    void resizeTableHeightMapSections();
-    void updateHeightMapGrid(double arg1);
-    void resetHeightmap();
+
     void storeParserState();
     void restoreParserState();
     void storeOffsets();
     void restoreOffsets();
     bool isGCodeFile(QString fileName);
-    bool isHeightmapFile(QString fileName);
     bool compareCoordinates(double x, double y, double z);
-    int getConsoleMinHeight();
+    int  getConsoleMinHeight();
     void updateOverride(SliderBox *slider, int value, char command);
     void jogStep();
 };

@@ -26,17 +26,24 @@ public:
     QColor highlightColor() const;
     void setHighlightColor(const QColor &highlightColor);
 
+    void setText(const QString &txt);
+    void setIcon(const QIcon &icon);
+
 protected:
     void enterEvent(QEvent *);
     void leaveEvent(QEvent *);
 
 private:
     void paintEvent(QPaintEvent *e);
+    QSize calcMinimumSize() const;
 
     bool m_hovered;
     QColor m_backColor;
     QColor m_foreColor;
     QColor m_highlightColor;
+
+    constexpr static int m_borderWidth = 4;
+    constexpr static int m_borderRadius = 5;
 };
 
 #endif // STYLEDTOOLBUTTON_H

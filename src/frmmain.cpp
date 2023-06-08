@@ -47,12 +47,11 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 #endif
 
 #ifndef UNIX
-    //FIXME: console
-    //ui->cboCommand->setStyleSheet("QComboBox {padding: 2;} QComboBox::drop-down {width: 0; border-style: none;} QComboBox::down-arrow {image: url(noimg);	border-width: 0;}");
+    // FIXME: console
+    // ui->cboCommand->setStyleSheet("QComboBox {padding: 2;} QComboBox::drop-down {width: 0; border-style: none;} QComboBox::down-arrow {image: url(noimg);	border-width: 0;}");
 #endif
     //    ui->scrollArea->updateMinimumWidth();
 
-    m_heightMapMode = false;
     m_lastDrawnLineIndex = 0;
     m_fileProcessedCommandIndex = 0;
     m_cellChanged = false;
@@ -65,11 +64,6 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     ui->cmdTop->setParent(ui->glwVisualizer);
     ui->cmdFront->setParent(ui->glwVisualizer);
     ui->cmdLeft->setParent(ui->glwVisualizer);
-
-    ui->cmdHeightMapBorderAuto->setMinimumHeight(ui->chkHeightMapBorderShow->sizeHint().height());
-    ui->cmdHeightMapCreate->setMinimumHeight(ui->cmdFileOpen->sizeHint().height());
-    ui->cmdHeightMapLoad->setMinimumHeight(ui->cmdFileOpen->sizeHint().height());
-    ui->cmdHeightMapMode->setMinimumHeight(ui->cmdFileOpen->sizeHint().height());
 
 #if 0
     connect(ui->cboJogStep, &ComboBoxKey::currentTextChanged, [=](QString)
@@ -101,7 +95,7 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_overrideTab->feed()->setCurrentValue(100);
     m_overrideTab->feed()->setTitle(tr("Feed rate:"));
     m_overrideTab->feed()->setSuffix("%");
-    //connect(m_overrideTab->feed(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+    // connect(m_overrideTab->feed(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
     connect(m_overrideTab->feed(), &SliderBox::toggled, [=]
             { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
     connect(m_overrideTab->feed(), &SliderBox::valueChanged, [=]
@@ -113,7 +107,8 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_overrideTab->rapid()->setCurrentValue(100);
     m_overrideTab->rapid()->setTitle(tr("Rapid speed:"));
     m_overrideTab->rapid()->setSuffix("%");
-    //connect(m_overrideTab->rapid(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+    // connect(m_overrideTab->rapid(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+
     connect(m_overrideTab->rapid(), &SliderBox::toggled, [=]
             { updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList()); });
     connect(m_overrideTab->rapid(), &SliderBox::valueChanged, [=]
@@ -125,7 +120,7 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_overrideTab->spindle()->setCurrentValue(100);
     m_overrideTab->spindle()->setTitle(tr("Spindle speed:"));
     m_overrideTab->spindle()->setSuffix("%");
-    //connect(m_overrideTab->spindle(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
+    // connect(m_overrideTab->spindle(), SIGNAL(toggled(bool)), this, SLOT(onOverridingToggled(bool)));
 
     m_originDrawer = new OriginDrawer();
     m_codeDrawer = new GcodeDrawer();
@@ -133,7 +128,6 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_probeDrawer = new GcodeDrawer();
     m_probeDrawer->setViewParser(&m_probeParser);
     m_probeDrawer->setVisible(false);
-    m_heightMapGridDrawer.setModel(&m_heightMapModel);
     m_currentDrawer = m_codeDrawer;
     m_toolDrawer.setToolPosition(QVector3D(0, 0, 0));
 
@@ -151,18 +145,13 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     ui->glwVisualizer->addDrawable(m_codeDrawer);
     ui->glwVisualizer->addDrawable(m_probeDrawer);
     ui->glwVisualizer->addDrawable(&m_toolDrawer);
-    ui->glwVisualizer->addDrawable(&m_heightMapBorderDrawer);
-    ui->glwVisualizer->addDrawable(&m_heightMapGridDrawer);
-    ui->glwVisualizer->addDrawable(&m_heightMapInterpolationDrawer);
     ui->glwVisualizer->addDrawable(&m_selectionDrawer);
     ui->glwVisualizer->fitDrawable();
 
     connect(ui->glwVisualizer, SIGNAL(rotationChanged()), this, SLOT(onVisualizatorRotationChanged()));
     connect(ui->glwVisualizer, SIGNAL(resized()), this, SLOT(placeVisualizerButtons()));
     connect(&m_programModel, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCellChanged(QModelIndex, QModelIndex)));
-    connect(&m_programHeightmapModel, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCellChanged(QModelIndex, QModelIndex)));
     connect(&m_probeModel, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCellChanged(QModelIndex, QModelIndex)));
-    connect(&m_heightMapModel, SIGNAL(dataChangedByUserInput()), this, SLOT(updateHeightMapInterpolationDrawer()));
 
     ui->tblProgram->setModel(&m_programModel);
     ui->tblProgram->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
@@ -170,26 +159,21 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
     clearTable();
 
-    // Console window handling
-    // FIXME: console
-    // connect(ui->grpConsole, SIGNAL(resized(QSize)), this, SLOT(onConsoleResized(QSize)));
-    connect(ui->scrollAreaWidgetContents, SIGNAL(sizeChanged(QSize)), this, SLOT(onPanelsSizeChanged(QSize)));
-
     m_senderErrorBox = new QMessageBox(QMessageBox::Warning, qApp->applicationDisplayName(), QString(),
                                        QMessageBox::Ignore | QMessageBox::Abort, this);
     m_senderErrorBox->setCheckBox(new QCheckBox(tr("Don't show again")));
 
-    // create the status widget before loadSettings 
+    // create the status widget before loadSettings
     // to avoid nullptr dereference..
     m_statusWidget = new GUI::StatusWidget();
-    m_consoleTab   = new GUI::ConsoleTab();
+    m_consoleTab = new GUI::ConsoleTab();
     connect(m_consoleTab, &GUI::ConsoleTab::returnPressed, this, &frmMain::onCboCommandReturnPressed);
 
-    m_jogWidget    = new GUI::JogWidget();
+    m_jogWidget = new GUI::JogWidget();
     connect(m_jogWidget, &GUI::JogWidget::jogVectorChanged, this, &frmMain::onJogVectorChanged);
     connect(m_jogWidget, &GUI::JogWidget::stopClicked, this, &frmMain::onJogStopClicked);
 
-    m_buttonBar    = new GUI::ButtonBar();
+    m_buttonBar = new GUI::ButtonBar();
     addToolBar(m_buttonBar);
     connect(m_buttonBar, &GUI::ButtonBar::cmdHome, this, &frmMain::onCmdHome_clicked);
     connect(m_buttonBar, &GUI::ButtonBar::cmdRestart, this, &frmMain::onCmdReset_clicked);
@@ -215,11 +199,8 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 #endif
 
     // Setting up spindle slider box
-    connect(m_spindleTab->slider(), &SliderBox::valueUserChanged, [=]        
-        { 
-            m_updateSpindleSpeed = true; 
-        }
-    );
+    connect(m_spindleTab->slider(), &SliderBox::valueUserChanged, [=]
+            { m_updateSpindleSpeed = true; });
 
     // Setup serial port
     m_serialPort.setParity(QSerialPort::NoParity);
@@ -238,10 +219,10 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
 
     this->installEventFilter(this);
     ui->tblProgram->installEventFilter(this);
-    
-    //FIXME: jog
-    //ui->cboJogStep->installEventFilter(this);
-    //ui->cboJogFeed->installEventFilter(this);
+
+    // FIXME: jog
+    // ui->cboJogStep->installEventFilter(this);
+    // ui->cboJogFeed->installEventFilter(this);
 
     connect(&m_timerConnection, SIGNAL(timeout()), this, SLOT(onTimerConnection()));
     connect(&m_timerStateQuery, SIGNAL(timeout()), this, SLOT(onTimerStateQuery()));
@@ -267,9 +248,9 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_tabWidget->addTab(m_consoleTab, tr("Console"));
     m_tabWidget->addTab(m_overrideTab, tr("Override"));
     m_tabWidget->addTab(m_spindleTab, tr("Spindle"));
-    
+
     displayBoxLayout->addWidget(m_tabWidget);
-    
+
     ui->verticalLayout_2->addLayout(displayBoxLayout);
 }
 
@@ -284,11 +265,6 @@ frmMain::~frmMain()
 bool frmMain::isGCodeFile(QString fileName)
 {
     return fileName.endsWith(".txt", Qt::CaseInsensitive) || fileName.endsWith(".nc", Qt::CaseInsensitive) || fileName.endsWith(".ncc", Qt::CaseInsensitive) || fileName.endsWith(".ngc", Qt::CaseInsensitive) || fileName.endsWith(".tap", Qt::CaseInsensitive);
-}
-
-bool frmMain::isHeightmapFile(QString fileName)
-{
-    return fileName.endsWith(".map", Qt::CaseInsensitive);
 }
 
 double frmMain::toolZPosition()
@@ -402,10 +378,10 @@ void frmMain::loadSettings()
     ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1]);
     resizeCheckBoxes();
 
-    //FIXME: console
-    //ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
-    //ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
-    //ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
+    // FIXME: console
+    // ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
+    // ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
+    // ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
 
     m_storedKeyboardControl = set.value("keyboardControl", false).toBool();
 
@@ -419,7 +395,7 @@ void frmMain::loadSettings()
         m_settings->setUserCommands(i, set.value(QString("userCommands%1").arg(i)).toString());
     }
 
-    //FIXME:
+    // FIXME:
 #if 0
     ui->cboJogStep->setItems(set.value("jogSteps").toStringList());
     ui->cboJogStep->setCurrentIndex(ui->cboJogStep->findText(set.value("jogStep").toString()));
@@ -429,23 +405,6 @@ void frmMain::loadSettings()
     m_jogWidget->setStepItems(set.value("jogSteps").toStringList());
     m_jogWidget->setFeedItems(set.value("jogFeeds").toStringList());
 #endif
-
-    ui->txtHeightMapBorderX->setValue(set.value("heightmapBorderX", 0).toDouble());
-    ui->txtHeightMapBorderY->setValue(set.value("heightmapBorderY", 0).toDouble());
-    ui->txtHeightMapBorderWidth->setValue(set.value("heightmapBorderWidth", 1).toDouble());
-    ui->txtHeightMapBorderHeight->setValue(set.value("heightmapBorderHeight", 1).toDouble());
-    ui->chkHeightMapBorderShow->setChecked(set.value("heightmapBorderShow", false).toBool());
-
-    ui->txtHeightMapGridX->setValue(set.value("heightmapGridX", 1).toDouble());
-    ui->txtHeightMapGridY->setValue(set.value("heightmapGridY", 1).toDouble());
-    ui->txtHeightMapGridZTop->setValue(set.value("heightmapGridZTop", 1).toDouble());
-    ui->txtHeightMapGridZBottom->setValue(set.value("heightmapGridZBottom", -1).toDouble());
-    ui->chkHeightMapGridShow->setChecked(set.value("heightmapGridShow", false).toBool());
-
-    ui->txtHeightMapInterpolationStepX->setValue(set.value("heightmapInterpolationStepX", 1).toDouble());
-    ui->txtHeightMapInterpolationStepY->setValue(set.value("heightmapInterpolationStepY", 1).toDouble());
-    ui->cboHeightMapInterpolationType->setCurrentIndex(set.value("heightmapInterpolationType", 0).toInt());
-    ui->chkHeightMapInterpolationShow->setChecked(set.value("heightmapInterpolationShow", false).toBool());
 
     foreach (ColorPicker *pick, m_settings->colors())
     {
@@ -459,15 +418,13 @@ void frmMain::loadSettings()
     // Update right panel width
     applySettings();
     show();
-    ui->scrollArea->updateMinimumWidth();
 
-    // Restore panels state
-    ui->grpHeightMap->setChecked(set.value("heightmapPanel", true).toBool());
+    // ui->scrollArea->updateMinimumWidth();
 
     // Restore last commands list
     // FIXME: console
-    //ui->cboCommand->addItems(set.value("recentCommands", QStringList()).toStringList());
-    //ui->cboCommand->setCurrentIndex(-1);
+    // ui->cboCommand->addItems(set.value("recentCommands", QStringList()).toStringList());
+    // ui->cboCommand->setCurrentIndex(-1);
 
     m_settingsLoading = false;
 }
@@ -518,10 +475,9 @@ void frmMain::saveSettings()
     set.setValue("splitter", ui->splitter->saveState());
     set.setValue("formGeometry", this->saveGeometry());
     set.setValue("formSettingsSize", m_settings->size());
-    set.setValue("heightmapPanel", ui->grpHeightMap->isChecked());
-    
-    //FIXME: Jog
-    //set.setValue("keyboardControl", ui->chkKeyboardControl->isChecked());
+
+    // FIXME: Jog
+    // set.setValue("keyboardControl", ui->chkKeyboardControl->isChecked());
     set.setValue("autoCompletion", m_settings->autoCompletion());
     set.setValue("units", m_settings->units());
     set.setValue("storedX", m_storedX);
@@ -555,26 +511,9 @@ void frmMain::saveSettings()
 
     // FIXME:
     set.setValue("jogSteps", m_jogWidget->getStepItems());
-    //set.setValue("jogStep", ui->cboJogStep->currentText());
+    // set.setValue("jogStep", ui->cboJogStep->currentText());
     set.setValue("jogFeeds", m_jogWidget->getFeedItems());
-    //set.setValue("jogFeed", ui->cboJogFeed->currentText());
-
-    set.setValue("heightmapBorderX", ui->txtHeightMapBorderX->value());
-    set.setValue("heightmapBorderY", ui->txtHeightMapBorderY->value());
-    set.setValue("heightmapBorderWidth", ui->txtHeightMapBorderWidth->value());
-    set.setValue("heightmapBorderHeight", ui->txtHeightMapBorderHeight->value());
-    set.setValue("heightmapBorderShow", ui->chkHeightMapBorderShow->isChecked());
-
-    set.setValue("heightmapGridX", ui->txtHeightMapGridX->value());
-    set.setValue("heightmapGridY", ui->txtHeightMapGridY->value());
-    set.setValue("heightmapGridZTop", ui->txtHeightMapGridZTop->value());
-    set.setValue("heightmapGridZBottom", ui->txtHeightMapGridZBottom->value());
-    set.setValue("heightmapGridShow", ui->chkHeightMapGridShow->isChecked());
-
-    set.setValue("heightmapInterpolationStepX", ui->txtHeightMapInterpolationStepX->value());
-    set.setValue("heightmapInterpolationStepY", ui->txtHeightMapInterpolationStepY->value());
-    set.setValue("heightmapInterpolationType", ui->cboHeightMapInterpolationType->currentIndex());
-    set.setValue("heightmapInterpolationShow", ui->chkHeightMapInterpolationShow->isChecked());
+    // set.setValue("jogFeed", ui->cboJogFeed->currentText());
 
     foreach (ColorPicker *pick, m_settings->colors())
     {
@@ -584,9 +523,9 @@ void frmMain::saveSettings()
     QStringList list;
 
     // FIXME: console
-    //for (int i = 0; i < ui->cboCommand->count(); i++)
+    // for (int i = 0; i < ui->cboCommand->count(); i++)
     //    list.append(ui->cboCommand->itemText(i));
-    //set.setValue("recentCommands", list);
+    // set.setValue("recentCommands", list);
 }
 
 bool frmMain::saveChanges(bool heightMapMode)
@@ -599,23 +538,6 @@ bool frmMain::saveChanges(bool heightMapMode)
             return false;
         else if (res == QMessageBox::Yes)
             on_actFileSave_triggered();
-        m_fileChanged = false;
-    }
-
-    if (m_heightMapChanged)
-    {
-        int res = QMessageBox::warning(this, this->windowTitle(), tr("Heightmap file was changed. Save?"),
-                                       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-        if (res == QMessageBox::Cancel)
-            return false;
-        else if (res == QMessageBox::Yes)
-        {
-            m_heightMapMode = true;
-            on_actFileSave_triggered();
-            m_heightMapMode = heightMapMode;
-            updateRecentFilesMenu(); // Restore g-code files recent menu
-        }
-
         m_fileChanged = false;
     }
 
@@ -632,9 +554,9 @@ void frmMain::updateControlsState()
 
     m_jogWidget->setEnabled(portOpened && !m_processingFile);
     m_consoleTab->setEnabled(portOpened);
-    //ui->cboCommand->setEnabled(portOpened && (!ui->chkKeyboardControl->isChecked()));
-    //ui->cmdCommandSend->setEnabled(portOpened);
-    //    ui->widgetFeed->setEnabled(!m_transferringFile);
+    // ui->cboCommand->setEnabled(portOpened && (!ui->chkKeyboardControl->isChecked()));
+    // ui->cmdCommandSend->setEnabled(portOpened);
+    //     ui->widgetFeed->setEnabled(!m_transferringFile);
 
     ui->chkTestMode->setEnabled(portOpened && !m_processingFile);
     m_buttonBar->enableControlButtons(!m_processingFile);
@@ -649,7 +571,7 @@ void frmMain::updateControlsState()
     ui->cmdFilePause->setEnabled(m_processingFile && !ui->chkTestMode->isChecked());
     ui->cmdFileAbort->setEnabled(m_processingFile);
     ui->actFileOpen->setEnabled(!m_processingFile);
-    ui->mnuRecent->setEnabled(!m_processingFile && ((m_recentFiles.count() > 0 && !m_heightMapMode) || (m_recentHeightmaps.count() > 0 && m_heightMapMode)));
+    ui->mnuRecent->setEnabled(!m_processingFile && (m_recentFiles.count() > 0));
     ui->actFileSave->setEnabled(m_programModel.rowCount() > 1);
     ui->actFileSaveAs->setEnabled(m_programModel.rowCount() > 1);
 
@@ -661,10 +583,10 @@ void frmMain::updateControlsState()
     }
 
     setWindowTitle(m_programFileName.isEmpty() ? qApp->applicationDisplayName()
-        : m_programFileName.mid(m_programFileName.lastIndexOf("/") + 1) + " - " + qApp->applicationDisplayName());
+                                               : m_programFileName.mid(m_programFileName.lastIndexOf("/") + 1) + " - " + qApp->applicationDisplayName());
 
     // FIXME: jog
-    //if (!m_processingFile)
+    // if (!m_processingFile)
     //    ui->chkKeyboardControl->setChecked(m_storedKeyboardControl);
 
 #ifdef WINDOWS
@@ -686,39 +608,24 @@ void frmMain::updateControlsState()
     ui->cmdFilePause->ensurePolished();
     ui->cmdFileAbort->ensurePolished();
 
-    // Heightmap
-    m_heightMapBorderDrawer.setVisible(ui->chkHeightMapBorderShow->isChecked() && m_heightMapMode);
-    m_heightMapGridDrawer.setVisible(ui->chkHeightMapGridShow->isChecked() && m_heightMapMode);
-    m_heightMapInterpolationDrawer.setVisible(ui->chkHeightMapInterpolationShow->isChecked() && m_heightMapMode);
+    // ui->grpProgram->setTitle(m_heightMapMode ? tr("Heightmap") : tr("G-code program"));
+    ui->grpProgram->setTitle(tr("G-code program"));
 
-    ui->grpProgram->setTitle(m_heightMapMode ? tr("Heightmap") : tr("G-code program"));
-    ui->grpProgram->setProperty("overrided", m_heightMapMode);
     style()->unpolish(ui->grpProgram);
     ui->grpProgram->ensurePolished();
 
-    ui->grpHeightMapSettings->setVisible(m_heightMapMode);
     // FIXME: jog
-    //ui->grpHeightMapSettings->setEnabled(!m_processingFile && !ui->chkKeyboardControl->isChecked());
-    ui->grpHeightMapSettings->setEnabled(!m_processingFile);
+    // ui->grpHeightMapSettings->setEnabled(!m_processingFile && !ui->chkKeyboardControl->isChecked());
 
-    ui->chkTestMode->setVisible(!m_heightMapMode);
-    ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1] && !m_heightMapMode);
+    ui->chkTestMode->setVisible(true);
+    ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1]);
+    ui->tblProgram->setVisible(true);
 
-    ui->tblHeightMap->setVisible(m_heightMapMode);
-    ui->tblProgram->setVisible(!m_heightMapMode);
+    ui->cmdFileSend->setText(tr("Send"));
+    ui->actFileSaveTransformedAs->setVisible(false);
+    // ui->cmdFileSend->menu()->actions().first()->setEnabled(!ui->cmdHeightMapMode->isChecked());
 
-    ui->widgetHeightMap->setEnabled(!m_processingFile && m_programModel.rowCount() > 1);
-    ui->cmdHeightMapMode->setEnabled(!ui->txtHeightMap->text().isEmpty());
-
-    ui->cmdFileSend->setText(m_heightMapMode ? tr("Probe") : tr("Send"));
-
-    ui->chkHeightMapUse->setEnabled(!m_heightMapMode && !ui->txtHeightMap->text().isEmpty());
-
-    ui->actFileSaveTransformedAs->setVisible(ui->chkHeightMapUse->isChecked());
-
-    ui->cmdFileSend->menu()->actions().first()->setEnabled(!ui->cmdHeightMapMode->isChecked());
-
-    m_selectionDrawer.setVisible(!ui->cmdHeightMapMode->isChecked());
+    m_selectionDrawer.setVisible(true);
 }
 
 void frmMain::openPort()
@@ -872,9 +779,9 @@ void frmMain::onSerialPortReadyRead()
             static QRegExp mpx("MPos:([^,]*),([^,]*),([^,^>^|]*)");
             if (mpx.indexIn(data) != -1)
             {
-                m_machineDisplay->setPosition(mpx.cap(1).toFloat(), 
-                    mpx.cap(2).toFloat(),
-                    mpx.cap(3).toFloat());
+                m_machineDisplay->setPosition(mpx.cap(1).toFloat(),
+                                              mpx.cap(2).toFloat(),
+                                              mpx.cap(3).toFloat());
             }
 
             // Status
@@ -883,7 +790,7 @@ void frmMain::onSerialPortReadyRead()
             {
                 status = GUI::StatusWidget::statusFromString(stx.cap(1));
                 auto prevStatus = m_statusWidget->getStatus();
-                
+
                 m_statusWidget->setStatus(status);
 
                 // Update controls
@@ -995,7 +902,7 @@ void frmMain::onSerialPortReadyRead()
             }
 
             // Update work coordinates
-            
+
             auto mpos = m_machineDisplay->getPosition();
             m_workDisplay->setPosition(mpos - workOffset);
 
@@ -1137,8 +1044,8 @@ void frmMain::onSerialPortReadyRead()
                     // Restore absolute/relative coordinate system after jog
                     if (ca.command.toUpper() == "$G" && ca.tableIndex == -2)
                     {
-                        //FIXME: jog                        
-                        //if (ui->chkKeyboardControl->isChecked())
+                        // FIXME: jog
+                        // if (ui->chkKeyboardControl->isChecked())
                         if (false)
                             m_absoluteCoordinates = response.contains("G90");
                         else if (response.contains("G90"))
@@ -1215,6 +1122,7 @@ void frmMain::onSerialPortReadyRead()
                         m_queue.clear();
                     }
 
+#if 0
                     // Process probing on heightmap mode only from table commands
                     if (ca.command.contains("G38.2") && m_heightMapMode && ca.tableIndex > -1)
                     {
@@ -1253,6 +1161,7 @@ void frmMain::onSerialPortReadyRead()
 
                         m_probeIndex++;
                     }
+#endif
 
                     // Change state query time on check mode on
                     if (ca.command.contains(QRegExp("$[cC]")))
@@ -1264,9 +1173,9 @@ void frmMain::onSerialPortReadyRead()
                     if (tb.isValid() && tb.text() == ca.command)
                     {
                         // FIXME: console
-                        // This code seems to make sure that if the console cursor is at the end of the 
+                        // This code seems to make sure that if the console cursor is at the end of the
                         // text, the console auto scrolls to the end when adding new text.
-                        //bool scrolledDown = ui->txtConsole->verticalScrollBar()->value() == ui->txtConsole->verticalScrollBar()->maximum();
+                        // bool scrolledDown = ui->txtConsole->verticalScrollBar()->value() == ui->txtConsole->verticalScrollBar()->maximum();
 
                         // Update text block numbers
                         int blocksAdded = response.count("; ");
@@ -1284,8 +1193,8 @@ void frmMain::onSerialPortReadyRead()
                         tc.insertText(" < " + QString(response).replace("; ", "\r\n"));
                         tc.endEditBlock();
 
-                        //if (scrolledDown)
-                        //    ui->txtConsole->verticalScrollBar()->setValue(ui->txtConsole->verticalScrollBar()->maximum());
+                        // if (scrolledDown)
+                        //     ui->txtConsole->verticalScrollBar()->setValue(ui->txtConsole->verticalScrollBar()->maximum());
                     }
 
                     // Check queue
@@ -1416,7 +1325,6 @@ void frmMain::onSerialPortReadyRead()
                         }
                     }
 
-
                     response.clear();
                 }
                 else
@@ -1452,7 +1360,7 @@ void frmMain::onSerialPortReadyRead()
                 }
 
                 m_consoleTab->appendPlainText(data);
-                //ui->txtConsole->appendPlainText(data);
+                // ui->txtConsole->appendPlainText(data);
             }
         }
         else
@@ -1470,8 +1378,8 @@ void frmMain::onSerialPortError(QSerialPort::SerialPortError error)
     if (error != QSerialPort::NoError && error != previousError)
     {
         previousError = error;
-        //FIXME: console
-        //m_consoleTab->appendPlainText(tr("Serial port error ") + QString::number(error) + ": " + m_serialPort.errorString());
+        // FIXME: console
+        // m_consoleTab->appendPlainText(tr("Serial port error ") + QString::number(error) + ": " + m_serialPort.errorString());
         if (m_serialPort.isOpen())
         {
             m_serialPort.close();
@@ -1576,17 +1484,6 @@ void frmMain::resizeEvent(QResizeEvent *re)
 
     placeVisualizerButtons();
     resizeCheckBoxes();
-    resizeTableHeightMapSections();
-}
-
-void frmMain::resizeTableHeightMapSections()
-{
-    if (ui->tblHeightMap->horizontalHeader()->defaultSectionSize() * ui->tblHeightMap->horizontalHeader()->count() < ui->glwVisualizer->width())
-        ui->tblHeightMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    else
-    {
-        ui->tblHeightMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-    }
 }
 
 void frmMain::resizeCheckBoxes()
@@ -1647,13 +1544,9 @@ void frmMain::timerEvent(QTimerEvent *te)
 
 void frmMain::closeEvent(QCloseEvent *ce)
 {
-    bool mode = m_heightMapMode;
-    m_heightMapMode = false;
-
-    if (!saveChanges(m_heightMapMode))
+    if (!saveChanges(false))
     {
         ce->ignore();
-        m_heightMapMode = mode;
         return;
     }
 
@@ -1661,7 +1554,6 @@ void frmMain::closeEvent(QCloseEvent *ce)
                                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
     {
         ce->ignore();
-        m_heightMapMode = mode;
         return;
     }
 
@@ -1679,8 +1571,12 @@ void frmMain::dragEnterEvent(QDragEnterEvent *dee)
     if (m_processingFile)
         return;
 
-    if (dee->mimeData()->hasFormat("text/plain") && !m_heightMapMode)
+    if (dee->mimeData()->hasFormat("text/plain"))
+    {
         dee->acceptProposedAction();
+    }
+
+#if 0    
     else if (dee->mimeData()->hasFormat("text/uri-list") && dee->mimeData()->urls().count() == 1)
     {
         QString fileName = dee->mimeData()->urls().at(0).toLocalFile();
@@ -1688,41 +1584,29 @@ void frmMain::dragEnterEvent(QDragEnterEvent *dee)
         if ((!m_heightMapMode && isGCodeFile(fileName)) || (m_heightMapMode && isHeightmapFile(fileName)))
             dee->acceptProposedAction();
     }
+#endif    
 }
 
 void frmMain::dropEvent(QDropEvent *de)
 {
     QString fileName = de->mimeData()->urls().at(0).toLocalFile();
 
-    if (!m_heightMapMode)
-    {
-        if (!saveChanges(false))
-            return;
+    if (!saveChanges(false))
+        return;
 
-        // Load dropped g-code file
-        if (!fileName.isEmpty())
-        {
-            addRecentFile(fileName);
-            updateRecentFilesMenu();
-            loadFile(fileName);
-            // Load dropped text
-        }
-        else
-        {
-            m_programFileName.clear();
-            m_fileChanged = true;
-            loadFile(de->mimeData()->text().split("\n"));
-        }
+    // Load dropped g-code file
+    if (!fileName.isEmpty())
+    {
+        addRecentFile(fileName);
+        updateRecentFilesMenu();
+        loadFile(fileName);
+        // Load dropped text
     }
     else
     {
-        if (!saveChanges(true))
-            return;
-
-        // Load dropped heightmap file
-        addRecentHeightmap(fileName);
-        updateRecentFilesMenu();
-        loadHeightMap(fileName);
+        m_programFileName.clear();
+        m_fileChanged = true;
+        loadFile(de->mimeData()->text().split("\n"));
     }
 }
 
@@ -1733,53 +1617,22 @@ void frmMain::on_actFileExit_triggered()
 
 void frmMain::on_cmdFileOpen_clicked()
 {
-    if (!m_heightMapMode)
+    if (!saveChanges(false))
+        return;
+
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open"), m_lastFolder,
+                                                    tr("G-Code files (*.nc *.ncc *.ngc *.tap *.gcode *.gc *.txt);;All files (*.*)"));
+
+    if (!fileName.isEmpty())
+        m_lastFolder = fileName.left(fileName.lastIndexOf(QRegExp("[/\\\\]+")));
+
+    if (fileName != "")
     {
-        if (!saveChanges(false))
-            return;
+        addRecentFile(fileName);
+        updateRecentFilesMenu();
 
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Open"), m_lastFolder,
-                                                        tr("G-Code files (*.nc *.ncc *.ngc *.tap *.gcode *.gc *.txt);;All files (*.*)"));
-
-        if (!fileName.isEmpty())
-            m_lastFolder = fileName.left(fileName.lastIndexOf(QRegExp("[/\\\\]+")));
-
-        if (fileName != "")
-        {
-            addRecentFile(fileName);
-            updateRecentFilesMenu();
-
-            loadFile(fileName);
-        }
+        loadFile(fileName);
     }
-    else
-    {
-        if (!saveChanges(true))
-            return;
-
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Open"), m_lastFolder, tr("Heightmap files (*.map)"));
-
-        if (fileName != "")
-        {
-            addRecentHeightmap(fileName);
-            updateRecentFilesMenu();
-            loadHeightMap(fileName);
-        }
-    }
-}
-
-void frmMain::resetHeightmap()
-{
-    delete m_heightMapInterpolationDrawer.data();
-    m_heightMapInterpolationDrawer.setData(NULL);
-    //    updateHeightMapInterpolationDrawer();
-
-    ui->tblHeightMap->setModel(NULL);
-    m_heightMapModel.resize(1, 1);
-
-    ui->txtHeightMap->clear();
-    m_heightMapFileName.clear();
-    m_heightMapChanged = false;
 }
 
 void frmMain::loadFile(QList<QString> data)
@@ -1790,7 +1643,6 @@ void frmMain::loadFile(QList<QString> data)
     // Reset tables
     clearTable();
     m_probeModel.clear();
-    m_programHeightmapModel.clear();
     m_currentModel = &m_programModel;
 
     // Reset parsers
@@ -1802,12 +1654,6 @@ void frmMain::loadFile(QList<QString> data)
     m_codeDrawer->update();
     ui->glwVisualizer->fitDrawable(m_codeDrawer);
     updateProgramEstimatedTime(QList<LineSegment *>());
-
-    // Update interface
-    ui->chkHeightMapUse->setChecked(false);
-    ui->grpHeightMap->setProperty("overrided", false);
-    style()->unpolish(ui->grpHeightMap);
-    ui->grpHeightMap->ensurePolished();
 
     // Reset tableview
     QByteArray headerState = ui->tblProgram->horizontalHeader()->saveState();
@@ -1903,7 +1749,6 @@ void frmMain::loadFile(QList<QString> data)
     m_codeDrawer->update();
     ui->glwVisualizer->fitDrawable(m_codeDrawer);
 
-    resetHeightmap();
     updateControlsState();
 }
 
@@ -1944,7 +1789,7 @@ QTime frmMain::updateProgramEstimatedTime(QList<LineSegment *> lines)
 
         if (!qIsNaN(length) && !qIsNaN(ls->getSpeed()) && ls->getSpeed() != 0)
         {
-            auto feed  = m_overrideTab->feed();
+            auto feed = m_overrideTab->feed();
             auto rapid = m_overrideTab->rapid();
 
             time +=
@@ -2000,9 +1845,9 @@ void frmMain::on_cmdFileSend_clicked()
     m_processingFile = true;
     m_fileEndSent = false;
 
-    //FIXME: jog
-    //m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
-    //ui->chkKeyboardControl->setChecked(false);
+    // FIXME: jog
+    // m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
+    // ui->chkKeyboardControl->setChecked(false);
 
     if (!ui->chkTestMode->isChecked())
         storeOffsets(); // Allready stored on check
@@ -2124,8 +1969,8 @@ void frmMain::onActSendFromLineTriggered()
     m_fileEndSent = false;
 
     // FIXME: jog
-    //m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
-    //ui->chkKeyboardControl->setChecked(false);
+    // m_storedKeyboardControl = ui->chkKeyboardControl->isChecked();
+    // ui->chkKeyboardControl->setChecked(false);
 
     if (!ui->chkTestMode->isChecked())
         storeOffsets(); // Allready stored on check
@@ -2233,10 +2078,6 @@ void frmMain::onTableCellChanged(QModelIndex i1, QModelIndex i2)
 
         // Clear cached args
         model->setData(model->index(i1.row(), 5), QVariant());
-
-        // Drop heightmap cache
-        if (m_currentModel == &m_programModel)
-            m_programHeightmapModel.clear();
 
         // Update visualizer
         updateParser();
@@ -2346,10 +2187,6 @@ void frmMain::onTableDeleteLines()
     else
         return;
 
-    // Drop heightmap cache
-    if (m_currentModel == &m_programModel)
-        m_programHeightmapModel.clear();
-
     updateParser();
     m_cellChanged = true;
     ui->tblProgram->selectRow(firstRow.row());
@@ -2394,9 +2231,7 @@ void frmMain::applySettings()
     m_toolDrawer.setToolLength(m_settings->toolLength());
     m_toolDrawer.setLineWidth(m_settings->lineWidth());
     m_codeDrawer->setLineWidth(m_settings->lineWidth());
-    m_heightMapBorderDrawer.setLineWidth(m_settings->lineWidth());
-    m_heightMapGridDrawer.setLineWidth(0.1);
-    m_heightMapInterpolationDrawer.setLineWidth(m_settings->lineWidth());
+
     ui->glwVisualizer->setLineWidth(m_settings->lineWidth());
     m_timerStateQuery.setInterval(m_settings->queryStateTime());
 
@@ -2414,13 +2249,9 @@ void frmMain::applySettings()
 
     m_spindleTab->setMaxSpindleSpeed(m_settings->spindleSpeedMax());
     m_spindleTab->setMinSpindleSpeed(m_settings->spindleSpeedMin());
-    
-    ui->scrollArea->setVisible(m_settings->panelHeightmap() || m_settings->panelOverriding() || m_settings->panelJog() || m_settings->panelSpindle());
-
-    ui->grpHeightMap->setVisible(m_settings->panelHeightmap());
 
     // FIXME: console
-    //ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
+    // ui->cboCommand->setAutoCompletion(m_settings->autoCompletion());
     // ui->cboCommand->setCompleter(m_settings->autoCompletion());
 
     m_codeDrawer->setSimplify(m_settings->simplify());
@@ -2474,12 +2305,12 @@ void frmMain::applySettings()
         Util::invertButtonIconColors(ui->cmdTop);
     }
 
-    //FIXME: console
-    //ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
-    //ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
-    //ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
+    // FIXME: console
+    // ui->cboCommand->setMinimumHeight(ui->cboCommand->height());
+    // ui->cmdClearConsole->setFixedHeight(ui->cboCommand->height());
+    // ui->cmdCommandSend->setFixedHeight(ui->cboCommand->height());
 
-    //foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
+    // foreach (StyledToolButton *button, this->findChildren<StyledToolButton *>(QRegExp("cmdUser\\d")))
     foreach (StyledToolButton *button, findChildren<StyledToolButton *>(QRegularExpression("cmdUser\\d")))
     {
         button->setToolTip(m_settings->userCommands(button->objectName().right(1).toInt()));
@@ -2564,7 +2395,7 @@ void frmMain::updateParser()
 
 void frmMain::on_cmdCommandSend_clicked()
 {
-    //FIXME: console
+    // FIXME: console
 #if 0    
     QString command = ui->cboCommand->currentText();
     if (command.isEmpty())
@@ -2573,7 +2404,7 @@ void frmMain::on_cmdCommandSend_clicked()
     ui->cboCommand->storeText();
     ui->cboCommand->setCurrentText("");
     sendCommand(command, -1);
-#endif    
+#endif
 }
 
 void frmMain::on_actFileOpen_triggered()
@@ -2618,7 +2449,7 @@ void frmMain::onCmdRestoreOrigin_clicked()
 {
     // Restore offset
     sendCommand(QString("G21"), -1, m_settings->showUICommands());
-    
+
     auto mpos = toMetric(m_machineDisplay->getPosition());
     auto wpos = toMetric(m_workDisplay->getPosition());
     sendCommand(QString("G53G90G0X%1Y%2Z%3").arg(mpos.x()).arg(mpos.y()).arg(mpos.z()), -1, m_settings->showUICommands());
@@ -2661,10 +2492,10 @@ void frmMain::onCmdSafePosition_clicked()
 void frmMain::onCmdSpindleToggled(bool checked)
 {
     m_spindleTab->setProperty("overrided", checked);
-    //style()->unpolish(m_spindleTab);
-    //m_spindleTab->ensurePolished();
+    // style()->unpolish(m_spindleTab);
+    // m_spindleTab->ensurePolished();
 
-    #if 0
+#if 0
     if (checked)
     {
         if (!ui->grpSpindle->isChecked())
@@ -2674,7 +2505,7 @@ void frmMain::onCmdSpindleToggled(bool checked)
     {
         ui->grpSpindle->setTitle(tr("Spindle"));
     }
-    #endif
+#endif
 }
 
 void frmMain::onCmdSpindleClicked(bool checked)
@@ -2716,119 +2547,84 @@ void frmMain::on_cmdFileReset_clicked()
     m_lastDrawnLineIndex = 0;
     m_probeIndex = -1;
 
-    if (!m_heightMapMode)
+
+    QElapsedTimer timer;
+
+    timer.start();
+
+    QList<LineSegment *> list = m_viewParser.getLineSegmentList();
+
+    QList<int> indexes;
+    for (int i = 0; i < list.count(); i++)
     {
-        QElapsedTimer timer;
-
-        timer.start();
-
-        QList<LineSegment *> list = m_viewParser.getLineSegmentList();
-
-        QList<int> indexes;
-        for (int i = 0; i < list.count(); i++)
-        {
-            list[i]->setDrawn(false);
-            indexes.append(i);
-        }
-        m_codeDrawer->update(indexes);
-
-        qDebug() << "drawn false:" << timer.elapsed();
-
-        timer.start();
-
-        ui->tblProgram->setUpdatesEnabled(false);
-
-        for (int i = 0; i < m_currentModel->data().count() - 1; i++)
-        {
-            m_currentModel->data()[i].state = GCodeItem::InQueue;
-            m_currentModel->data()[i].response = QString();
-        }
-        ui->tblProgram->setUpdatesEnabled(true);
-
-        qDebug() << "table updated:" << timer.elapsed();
-
-        ui->tblProgram->scrollTo(m_currentModel->index(0, 0));
-        ui->tblProgram->clearSelection();
-        ui->tblProgram->selectRow(0);
-
-        ui->glwVisualizer->setSpendTime(QTime(0, 0, 0));
+        list[i]->setDrawn(false);
+        indexes.append(i);
     }
-    else
+    m_codeDrawer->update(indexes);
+
+    qDebug() << "drawn false:" << timer.elapsed();
+
+    timer.start();
+
+    ui->tblProgram->setUpdatesEnabled(false);
+
+    for (int i = 0; i < m_currentModel->data().count() - 1; i++)
     {
-        ui->txtHeightMapGridX->setEnabled(true);
-        ui->txtHeightMapGridY->setEnabled(true);
-        ui->txtHeightMapGridZBottom->setEnabled(true);
-        ui->txtHeightMapGridZTop->setEnabled(true);
-
-        delete m_heightMapInterpolationDrawer.data();
-        m_heightMapInterpolationDrawer.setData(NULL);
-
-        m_heightMapModel.clear();
-        updateHeightMapGrid();
+        m_currentModel->data()[i].state = GCodeItem::InQueue;
+        m_currentModel->data()[i].response = QString();
     }
+    ui->tblProgram->setUpdatesEnabled(true);
+
+    qDebug() << "table updated:" << timer.elapsed();
+
+    ui->tblProgram->scrollTo(m_currentModel->index(0, 0));
+    ui->tblProgram->clearSelection();
+    ui->tblProgram->selectRow(0);
+
+    ui->glwVisualizer->setSpendTime(QTime(0, 0, 0));
+
 }
 
 void frmMain::on_actFileNew_triggered()
 {
-    qDebug() << "changes:" << m_fileChanged << m_heightMapChanged;
+    qDebug() << "changes:" << m_fileChanged;
 
-    if (!saveChanges(m_heightMapMode))
+    if (!saveChanges(false))
         return;
 
-    if (!m_heightMapMode)
-    {
-        // Reset tables
-        clearTable();
-        m_probeModel.clear();
-        m_programHeightmapModel.clear();
-        m_currentModel = &m_programModel;
+    // Reset tables
+    clearTable();
+    m_probeModel.clear();
+    m_currentModel = &m_programModel;
 
-        // Reset parsers
-        m_viewParser.reset();
-        m_probeParser.reset();
+    // Reset parsers
+    m_viewParser.reset();
+    m_probeParser.reset();
 
-        // Reset code drawer
-        m_codeDrawer->update();
-        m_currentDrawer = m_codeDrawer;
-        ui->glwVisualizer->fitDrawable();
-        updateProgramEstimatedTime(QList<LineSegment *>());
+    // Reset code drawer
+    m_codeDrawer->update();
+    m_currentDrawer = m_codeDrawer;
+    ui->glwVisualizer->fitDrawable();
+    updateProgramEstimatedTime(QList<LineSegment *>());
 
-        m_programFileName = "";
-        ui->chkHeightMapUse->setChecked(false);
-        ui->grpHeightMap->setProperty("overrided", false);
-        style()->unpolish(ui->grpHeightMap);
-        ui->grpHeightMap->ensurePolished();
+    m_programFileName = "";
 
-        // Reset tableview
-        QByteArray headerState = ui->tblProgram->horizontalHeader()->saveState();
-        ui->tblProgram->setModel(NULL);
+    // Reset tableview
+    QByteArray headerState = ui->tblProgram->horizontalHeader()->saveState();
+    ui->tblProgram->setModel(NULL);
 
-        // Set table model
-        ui->tblProgram->setModel(&m_programModel);
-        ui->tblProgram->horizontalHeader()->restoreState(headerState);
+    // Set table model
+    ui->tblProgram->setModel(&m_programModel);
+    ui->tblProgram->horizontalHeader()->restoreState(headerState);
 
-        // Update tableview
-        connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
-        ui->tblProgram->selectRow(0);
+    // Update tableview
+    connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
+    ui->tblProgram->selectRow(0);
 
-        // Clear selection marker
-        m_selectionDrawer.setEndPosition(QVector3D(sNan, sNan, sNan));
-        m_selectionDrawer.update();
+    // Clear selection marker
+    m_selectionDrawer.setEndPosition(QVector3D(sNan, sNan, sNan));
+    m_selectionDrawer.update();
 
-        resetHeightmap();
-    }
-    else
-    {
-        m_heightMapModel.clear();
-        on_cmdFileReset_clicked();
-        ui->txtHeightMap->setText(tr("Untitled"));
-        m_heightMapFileName.clear();
-
-        updateHeightMapBorderDrawer();
-        updateHeightMapGrid();
-
-        m_heightMapChanged = false;
-    }
 
     updateControlsState();
 }
@@ -2868,67 +2664,38 @@ void frmMain::on_actFileSaveTransformedAs_triggered()
 
     if (!fileName.isEmpty())
     {
-        saveProgramToFile(fileName, &m_programHeightmapModel);
+        //saveProgramToFile(fileName, &m_programHeightmapModel);
     }
 }
 
 void frmMain::on_actFileSaveAs_triggered()
 {
-    if (!m_heightMapMode)
+    QString fileName = (QFileDialog::getSaveFileName(this, tr("Save file as"), m_lastFolder, tr("G-Code files (*.nc *.ncc *.ngc *.tap  *.gcode *.gc *.txt)")));
+
+    if (!fileName.isEmpty())
     {
-        QString fileName = (QFileDialog::getSaveFileName(this, tr("Save file as"), m_lastFolder, tr("G-Code files (*.nc *.ncc *.ngc *.tap  *.gcode *.gc *.txt)")));
+        if (saveProgramToFile(fileName, &m_programModel))
+        {
+            m_programFileName = fileName;
+            m_fileChanged = false;
 
-        if (!fileName.isEmpty())
-            if (saveProgramToFile(fileName, &m_programModel))
-            {
-                m_programFileName = fileName;
-                m_fileChanged = false;
+            addRecentFile(fileName);
+            updateRecentFilesMenu();
 
-                addRecentFile(fileName);
-                updateRecentFilesMenu();
-
-                updateControlsState();
-            }
-    }
-    else
-    {
-        QString fileName = (QFileDialog::getSaveFileName(this, tr("Save file as"), m_lastFolder, tr("Heightmap files (*.map)")));
-
-        if (!fileName.isEmpty())
-            if (saveHeightMap(fileName))
-            {
-                ui->txtHeightMap->setText(fileName.mid(fileName.lastIndexOf("/") + 1));
-                m_heightMapFileName = fileName;
-                m_heightMapChanged = false;
-
-                addRecentHeightmap(fileName);
-                updateRecentFilesMenu();
-
-                updateControlsState();
-            }
+            updateControlsState();
+        }
     }
 }
 
 void frmMain::on_actFileSave_triggered()
 {
-    if (!m_heightMapMode)
-    {
-        // G-code saving
-        if (m_programFileName.isEmpty())
-            on_actFileSaveAs_triggered();
-        else
-        {
-            saveProgramToFile(m_programFileName, &m_programModel);
-            m_fileChanged = false;
-        }
-    }
+    // G-code saving
+    if (m_programFileName.isEmpty())
+        on_actFileSaveAs_triggered();
     else
     {
-        // Height map saving
-        if (m_heightMapFileName.isEmpty())
-            on_actFileSaveAs_triggered();
-        else
-            saveHeightMap(m_heightMapFileName);
+        saveProgramToFile(m_programFileName, &m_programModel);
+        m_fileChanged = false;
     }
 }
 
@@ -3014,12 +2781,11 @@ QString frmMain::feedOverride(QString command)
     return command;
 }
 
-
 bool frmMain::eventFilter(QObject *obj, QEvent *event)
 {
     // FIXME: add jog widget..
     // Main form events
-    //if (obj == this || obj == ui->tblProgram || obj == ui->cboJogStep || obj == ui->cboJogFeed)
+    // if (obj == this || obj == ui->tblProgram || obj == ui->cboJogStep || obj == ui->cboJogFeed)
     if (obj == this || obj == ui->tblProgram)
     {
 
@@ -3078,34 +2844,34 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
 
             if (!m_processingFile && keyEvent->key() == Qt::Key_ScrollLock && obj == this)
             {
-                //FIXME:
-                //ui->chkKeyboardControl->toggle();
-                //if (!ui->chkKeyboardControl->isChecked())
+                // FIXME:
+                // ui->chkKeyboardControl->toggle();
+                // if (!ui->chkKeyboardControl->isChecked())
                 {
-                    //FIXME: console
-                    //ui->cboCommand->setFocus();
+                    // FIXME: console
+                    // ui->cboCommand->setFocus();
                 }
             }
 
             // FIXME: jog
-            //if (!m_processingFile && ui->chkKeyboardControl->isChecked())
+            // if (!m_processingFile && ui->chkKeyboardControl->isChecked())
             if (!m_processingFile)
             {
                 if (keyEvent->key() == Qt::Key_7)
                 {
-                    //ui->cboJogStep->setCurrentPrevious();
+                    // ui->cboJogStep->setCurrentPrevious();
                 }
                 else if (keyEvent->key() == Qt::Key_1)
                 {
-                    //ui->cboJogStep->setCurrentNext();
+                    // ui->cboJogStep->setCurrentNext();
                 }
                 else if (keyEvent->key() == Qt::Key_Minus)
                 {
-                    //ui->cboJogFeed->setCurrentPrevious();
+                    // ui->cboJogFeed->setCurrentPrevious();
                 }
                 else if (keyEvent->key() == Qt::Key_Plus)
                 {
-                    //ui->cboJogFeed->setCurrentNext();
+                    // ui->cboJogFeed->setCurrentNext();
                 }
                 else if (keyEvent->key() == Qt::Key_5)
                 {
@@ -3133,60 +2899,6 @@ bool frmMain::eventFilter(QObject *obj, QEvent *event)
                 }
             }
         }
-
-        // Splitter events
-    }
-    else if (obj == ui->splitPanels && event->type() == QEvent::Resize)
-    {
-        // Resize splited widgets
-        onPanelsSizeChanged(ui->scrollAreaWidgetContents->sizeHint());
-
-        // Splitter handle events
-    }
-    else if (obj == ui->splitPanels->handle(1))
-    {
-        int minHeight = getConsoleMinHeight();
-        switch (event->type())
-        {
-        case QEvent::MouseButtonPress:
-            // Store current console group box minimum & real heights
-            m_storedConsoleMinimumHeight = m_consoleTab->minimumHeight();
-            m_storedConsoleHeight = m_consoleTab->height();
-
-            // Update splited sizes
-            ui->splitPanels->setSizes(QList<int>() << ui->scrollArea->height() << m_consoleTab->height());
-
-            // Set new console mimimum height
-            //FIXME: console
-            //m_consoleTab->setMinimumHeight(qMax(minHeight, ui->splitPanels->height() - ui->scrollAreaWidgetContents->sizeHint().height() - ui->splitPanels->handleWidth() - 4));
-            break;
-        case QEvent::MouseButtonRelease:
-            // Store new console minimum height if height was changed with split handle
-            if (m_consoleTab->height() != m_storedConsoleHeight)
-            {
-                //m_consoleTab->setMinimumHeight(m_consoleTab->height());
-            }
-            else
-            {
-                //m_consoleTab->setMinimumHeight(m_storedConsoleMinimumHeight);
-            }
-            break;
-        case QEvent::MouseButtonDblClick:
-            // Switch to min/max console size
-            if (m_consoleTab->height() == minHeight || !ui->scrollArea->verticalScrollBar()->isVisible())
-            {
-                ui->splitPanels->setSizes(QList<int>() << ui->scrollArea->minimumHeight()
-                                                       << ui->splitPanels->height() - ui->splitPanels->handleWidth() - ui->scrollArea->minimumHeight());
-            }
-            else
-            {
-                //m_consoleTab->setMinimumHeight(minHeight);
-                onPanelsSizeChanged(ui->scrollAreaWidgetContents->sizeHint());
-            }
-            break;
-        default:
-            break;
-        }
     }
 
     return QMainWindow::eventFilter(obj, event);
@@ -3206,16 +2918,10 @@ void frmMain::onConsoleResized(QSize size)
     bool visible = m_consoleTab->height() > minHeight;
     if (m_consoleTab->isVisible() != visible)
     {
-        //m_consoleTab->setVisible(visible);        
+        // m_consoleTab->setVisible(visible);
     }
 
     m_consoleTab->setVisible(true);
-}
-
-void frmMain::onPanelsSizeChanged(QSize size)
-{
-    ui->splitPanels->setSizes(QList<int>() << size.height() + 4
-                                           << ui->splitPanels->height() - size.height() - 4 - ui->splitPanels->handleWidth());
 }
 
 bool frmMain::keyIsMovement(int key)
@@ -3225,11 +2931,11 @@ bool frmMain::keyIsMovement(int key)
 
 void frmMain::on_chkKeyboardControl_toggled(bool checked)
 {
-    #if 0
+#if 0
     ui->grpJog->setProperty("overrided", checked);
     style()->unpolish(ui->grpJog);
     ui->grpJog->ensurePolished();
-    #endif
+#endif
 
     // Store/restore coordinate system
     if (checked)
@@ -3247,7 +2953,6 @@ void frmMain::on_chkKeyboardControl_toggled(bool checked)
 
     updateControlsState();
 }
-
 
 void frmMain::on_tblProgram_customContextMenuRequested(const QPoint &pos)
 {
@@ -3277,7 +2982,7 @@ void frmMain::on_splitter_splitterMoved(int pos, int index)
     if ((ui->splitter->sizes()[1] == 0) != tableCollapsed)
     {
         this->setUpdatesEnabled(false);
-        ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1] && !m_heightMapMode);
+        ui->chkAutoScroll->setVisible(ui->splitter->sizes()[1]);
         updateLayouts();
         resizeCheckBoxes();
 
@@ -3303,13 +3008,6 @@ void frmMain::addRecentFile(QString fileName)
         m_recentFiles.takeFirst();
 }
 
-void frmMain::addRecentHeightmap(QString fileName)
-{
-    m_recentHeightmaps.removeAll(fileName);
-    m_recentHeightmaps.append(fileName);
-    if (m_recentHeightmaps.count() > 5)
-        m_recentHeightmaps.takeFirst();
-}
 
 void frmMain::onActRecentFileTriggered()
 {
@@ -3318,18 +3016,16 @@ void frmMain::onActRecentFileTriggered()
 
     if (action != NULL)
     {
-        if (!saveChanges(m_heightMapMode))
+        if (!saveChanges(false))
             return;
-        if (!m_heightMapMode)
-            loadFile(fileName);
-        else
-            loadHeightMap(fileName);
+
+        loadFile(fileName);
     }
 }
 
 void frmMain::onCboCommandReturnPressed()
 {
-    //FIXME: console
+    // FIXME: console
     QString command = m_consoleTab->getCommand();
     if (command.isEmpty())
         return;
@@ -3351,7 +3047,7 @@ void frmMain::updateRecentFilesMenu()
         }
     }
 
-    foreach (QString file, !m_heightMapMode ? m_recentFiles : m_recentHeightmaps)
+    foreach (QString file, m_recentFiles)
     {
         QAction *action = new QAction(file, this);
         connect(action, SIGNAL(triggered()), this, SLOT(onActRecentFileTriggered()));
@@ -3363,10 +3059,7 @@ void frmMain::updateRecentFilesMenu()
 
 void frmMain::on_actRecentClear_triggered()
 {
-    if (!m_heightMapMode)
-        m_recentFiles.clear();
-    else
-        m_recentHeightmaps.clear();
+    m_recentFiles.clear();
     updateRecentFilesMenu();
 }
 
@@ -3377,26 +3070,9 @@ double frmMain::toMetric(double value) const
 
 QVector3D frmMain::toMetric(const QVector3D &value) const
 {
-    return QVector3D(toMetric(value.x()), 
-        toMetric(value.y()), 
-        toMetric(value.z()));
-}
-
-void frmMain::on_grpHeightMap_toggled(bool arg1)
-{
-    ui->widgetHeightMap->setVisible(arg1);
-}
-
-QRectF frmMain::borderRectFromTextboxes()
-{
-    QRectF rect;
-
-    rect.setX(ui->txtHeightMapBorderX->value());
-    rect.setY(ui->txtHeightMapBorderY->value());
-    rect.setWidth(ui->txtHeightMapBorderWidth->value());
-    rect.setHeight(ui->txtHeightMapBorderHeight->value());
-
-    return rect;
+    return QVector3D(toMetric(value.x()),
+                     toMetric(value.y()),
+                     toMetric(value.z()));
 }
 
 QRectF frmMain::borderRectFromExtremes()
@@ -3411,827 +3087,9 @@ QRectF frmMain::borderRectFromExtremes()
     return rect;
 }
 
-void frmMain::updateHeightMapBorderDrawer()
-{
-    if (m_settingsLoading)
-        return;
-
-    qDebug() << "updating border drawer";
-
-    m_heightMapBorderDrawer.setBorderRect(borderRectFromTextboxes());
-}
-
-void frmMain::updateHeightMapGrid(double arg1)
-{
-    if (sender()->property("previousValue").toDouble() != arg1 && !updateHeightMapGrid())
-        static_cast<QDoubleSpinBox *>(sender())->setValue(sender()->property("previousValue").toDouble());
-    else
-        sender()->setProperty("previousValue", arg1);
-}
-
-bool frmMain::updateHeightMapGrid()
-{
-    if (m_settingsLoading)
-        return true;
-
-    qDebug() << "updating heightmap grid drawer";
-
-    // Grid map changing warning
-    bool nan = true;
-    for (int i = 0; i < m_heightMapModel.rowCount(); i++)
-        for (int j = 0; j < m_heightMapModel.columnCount(); j++)
-            if (!qIsNaN(m_heightMapModel.data(m_heightMapModel.index(i, j), Qt::UserRole).toDouble()))
-            {
-                nan = false;
-                break;
-            }
-    if (!nan && QMessageBox::warning(this, this->windowTitle(), tr("Changing grid settings will reset probe data. Continue?"),
-                                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
-        return false;
-
-    // Update grid drawer
-    QRectF borderRect = borderRectFromTextboxes();
-    m_heightMapGridDrawer.setBorderRect(borderRect);
-    m_heightMapGridDrawer.setGridSize(QPointF(ui->txtHeightMapGridX->value(), ui->txtHeightMapGridY->value()));
-    m_heightMapGridDrawer.setZBottom(ui->txtHeightMapGridZBottom->value());
-    m_heightMapGridDrawer.setZTop(ui->txtHeightMapGridZTop->value());
-
-    // Reset model
-    //    int gridPointsX = trunc(borderRect.width() / ui->txtHeightMapGridX->value()) + 1;
-    //    int gridPointsY = trunc(borderRect.height() / ui->txtHeightMapGridY->value()) + 1;
-    int gridPointsX = ui->txtHeightMapGridX->value();
-    int gridPointsY = ui->txtHeightMapGridY->value();
-
-    m_heightMapModel.resize(gridPointsX, gridPointsY);
-    ui->tblHeightMap->setModel(NULL);
-    ui->tblHeightMap->setModel(&m_heightMapModel);
-    resizeTableHeightMapSections();
-
-    // Update interpolation
-    updateHeightMapInterpolationDrawer(true);
-
-    // Generate probe program
-    double gridStepX = gridPointsX > 1 ? borderRect.width() / (gridPointsX - 1) : 0;
-    double gridStepY = gridPointsY > 1 ? borderRect.height() / (gridPointsY - 1) : 0;
-
-    qDebug() << "generating probe program";
-
-    m_programLoading = true;
-    m_probeModel.clear();
-    m_probeModel.insertRow(0);
-
-    m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G21G90F%1G0Z%2").arg(m_settings->heightmapProbingFeed()).arg(ui->txtHeightMapGridZTop->value()));
-    m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G0X0Y0"));
-    //                         .arg(ui->txtHeightMapGridZTop->value()));
-    m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G38.2Z%1")
-                                                                                 .arg(ui->txtHeightMapGridZBottom->value()));
-    m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G0Z%1")
-                                                                                 .arg(ui->txtHeightMapGridZTop->value()));
-
-    double x, y;
-
-    for (int i = 0; i < gridPointsY; i++)
-    {
-        y = borderRect.top() + gridStepY * i;
-        for (int j = 0; j < gridPointsX; j++)
-        {
-            x = borderRect.left() + gridStepX * (i % 2 ? gridPointsX - 1 - j : j);
-            m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G0X%1Y%2")
-                                                                                         .arg(x, 0, 'f', 3)
-                                                                                         .arg(y, 0, 'f', 3));
-            m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G38.2Z%1")
-                                                                                         .arg(ui->txtHeightMapGridZBottom->value()));
-            m_probeModel.setData(m_probeModel.index(m_probeModel.rowCount() - 1, 1), QString("G0Z%1")
-                                                                                         .arg(ui->txtHeightMapGridZTop->value()));
-        }
-    }
-
-    m_programLoading = false;
-
-    if (m_currentDrawer == m_probeDrawer)
-        updateParser();
-
-    m_heightMapChanged = true;
-    return true;
-}
-
-void frmMain::updateHeightMapInterpolationDrawer(bool reset)
-{
-    if (m_settingsLoading)
-        return;
-
-    qDebug() << "Updating interpolation";
-
-    QRectF borderRect = borderRectFromTextboxes();
-    m_heightMapInterpolationDrawer.setBorderRect(borderRect);
-
-    QVector<QVector<double>> *interpolationData = new QVector<QVector<double>>;
-
-    int interpolationPointsX = ui->txtHeightMapInterpolationStepX->value(); // * (ui->txtHeightMapGridX->value() - 1) + 1;
-    int interpolationPointsY = ui->txtHeightMapInterpolationStepY->value(); // * (ui->txtHeightMapGridY->value() - 1) + 1;
-
-    double interpolationStepX = interpolationPointsX > 1 ? borderRect.width() / (interpolationPointsX - 1) : 0;
-    double interpolationStepY = interpolationPointsY > 1 ? borderRect.height() / (interpolationPointsY - 1) : 0;
-
-    for (int i = 0; i < interpolationPointsY; i++)
-    {
-        QVector<double> row;
-        for (int j = 0; j < interpolationPointsX; j++)
-        {
-
-            double x = interpolationStepX * j + borderRect.x();
-            double y = interpolationStepY * i + borderRect.y();
-
-            row.append(reset ? qQNaN() : Interpolation::bicubicInterpolate(borderRect, &m_heightMapModel, x, y));
-        }
-        interpolationData->append(row);
-    }
-
-    if (m_heightMapInterpolationDrawer.data() != NULL)
-    {
-        delete m_heightMapInterpolationDrawer.data();
-    }
-    m_heightMapInterpolationDrawer.setData(interpolationData);
-
-    // Update grid drawer
-    m_heightMapGridDrawer.update();
-
-    // Heightmap changed by table user input
-    if (sender() == &m_heightMapModel)
-        m_heightMapChanged = true;
-
-    // Reset heightmapped program model
-    m_programHeightmapModel.clear();
-}
-
-void frmMain::on_chkHeightMapBorderShow_toggled(bool checked)
-{
-    Q_UNUSED(checked)
-
-    updateControlsState();
-}
-
-void frmMain::on_txtHeightMapBorderX_valueChanged(double arg1)
-{
-    updateHeightMapBorderDrawer();
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_txtHeightMapBorderWidth_valueChanged(double arg1)
-{
-    updateHeightMapBorderDrawer();
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_txtHeightMapBorderY_valueChanged(double arg1)
-{
-    updateHeightMapBorderDrawer();
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_txtHeightMapBorderHeight_valueChanged(double arg1)
-{
-    updateHeightMapBorderDrawer();
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_chkHeightMapGridShow_toggled(bool checked)
-{
-    Q_UNUSED(checked)
-
-    updateControlsState();
-}
-
-void frmMain::on_txtHeightMapGridX_valueChanged(double arg1)
-{
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_txtHeightMapGridY_valueChanged(double arg1)
-{
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_txtHeightMapGridZBottom_valueChanged(double arg1)
-{
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_txtHeightMapGridZTop_valueChanged(double arg1)
-{
-    updateHeightMapGrid(arg1);
-}
-
-void frmMain::on_cmdHeightMapMode_toggled(bool checked)
-{
-    // Update flag
-    m_heightMapMode = checked;
-
-    // Reset file progress
-    m_fileCommandIndex = 0;
-    m_fileProcessedCommandIndex = 0;
-    m_lastDrawnLineIndex = 0;
-
-    // Reset/restore g-code program modification on edit mode enter/exit
-    if (ui->chkHeightMapUse->isChecked())
-    {
-        on_chkHeightMapUse_clicked(!checked); // Update gcode program parser
-                                              //        m_codeDrawer->updateData(); // Force update data to properly shadowing
-    }
-
-    if (checked)
-    {
-        ui->tblProgram->setModel(&m_probeModel);
-        resizeTableHeightMapSections();
-        m_currentModel = &m_probeModel;
-        m_currentDrawer = m_probeDrawer;
-        updateParser(); // Update probe program parser
-    }
-    else
-    {
-        m_probeParser.reset();
-        if (!ui->chkHeightMapUse->isChecked())
-        {
-            ui->tblProgram->setModel(&m_programModel);
-            connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
-            ui->tblProgram->selectRow(0);
-
-            resizeTableHeightMapSections();
-            m_currentModel = &m_programModel;
-            m_currentDrawer = m_codeDrawer;
-
-            if (!ui->chkHeightMapUse->isChecked())
-            {
-                ui->glwVisualizer->updateExtremes(m_codeDrawer);
-                updateProgramEstimatedTime(m_currentDrawer->viewParser()->getLineSegmentList());
-            }
-        }
-    }
-
-    // Shadow toolpath
-    QList<LineSegment *> list = m_viewParser.getLineSegmentList();
-    QList<int> indexes;
-    for (int i = m_lastDrawnLineIndex; i < list.count(); i++)
-    {
-        list[i]->setDrawn(checked);
-        list[i]->setIsHightlight(false);
-        indexes.append(i);
-    }
-    // Update only vertex color.
-    // If chkHeightMapUse was checked codeDrawer updated via updateParser
-    if (!ui->chkHeightMapUse->isChecked())
-        m_codeDrawer->update(indexes);
-
-    updateRecentFilesMenu();
-    updateControlsState();
-}
-
-bool frmMain::saveHeightMap(QString fileName)
-{
-    QFile file(fileName);
-    QDir dir;
-
-    if (file.exists())
-        dir.remove(file.fileName());
-    if (!file.open(QIODevice::WriteOnly))
-        return false;
-
-    QTextStream textStream(&file);
-    textStream << ui->txtHeightMapBorderX->text() << ";"
-               << ui->txtHeightMapBorderY->text() << ";"
-               << ui->txtHeightMapBorderWidth->text() << ";"
-               << ui->txtHeightMapBorderHeight->text() << "\r\n";
-    textStream << ui->txtHeightMapGridX->text() << ";"
-               << ui->txtHeightMapGridY->text() << ";"
-               << ui->txtHeightMapGridZBottom->text() << ";"
-               << ui->txtHeightMapGridZTop->text() << "\r\n";
-    textStream << ui->cboHeightMapInterpolationType->currentIndex() << ";"
-               << ui->txtHeightMapInterpolationStepX->text() << ";"
-               << ui->txtHeightMapInterpolationStepY->text() << "\r\n";
-
-    for (int i = 0; i < m_heightMapModel.rowCount(); i++)
-    {
-        for (int j = 0; j < m_heightMapModel.columnCount(); j++)
-        {
-            textStream << m_heightMapModel.data(m_heightMapModel.index(i, j), Qt::UserRole).toString() << ((j == m_heightMapModel.columnCount() - 1) ? "" : ";");
-        }
-        textStream << "\r\n";
-    }
-
-    file.close();
-
-    m_heightMapChanged = false;
-
-    return true;
-}
-
-void frmMain::loadHeightMap(QString fileName)
-{
-    QFile file(fileName);
-
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        QMessageBox::critical(this, this->windowTitle(), tr("Can't open file:\n") + fileName);
-        return;
-    }
-    QTextStream textStream(&file);
-
-    m_settingsLoading = true;
-
-    // Storing previous values
-    ui->txtHeightMapBorderX->setValue(qQNaN());
-    ui->txtHeightMapBorderY->setValue(qQNaN());
-    ui->txtHeightMapBorderWidth->setValue(qQNaN());
-    ui->txtHeightMapBorderHeight->setValue(qQNaN());
-
-    ui->txtHeightMapGridX->setValue(qQNaN());
-    ui->txtHeightMapGridY->setValue(qQNaN());
-    ui->txtHeightMapGridZBottom->setValue(qQNaN());
-    ui->txtHeightMapGridZTop->setValue(qQNaN());
-
-    QList<QString> list = textStream.readLine().split(";");
-    ui->txtHeightMapBorderX->setValue(list[0].toDouble());
-    ui->txtHeightMapBorderY->setValue(list[1].toDouble());
-    ui->txtHeightMapBorderWidth->setValue(list[2].toDouble());
-    ui->txtHeightMapBorderHeight->setValue(list[3].toDouble());
-
-    list = textStream.readLine().split(";");
-    ui->txtHeightMapGridX->setValue(list[0].toDouble());
-    ui->txtHeightMapGridY->setValue(list[1].toDouble());
-    ui->txtHeightMapGridZBottom->setValue(list[2].toDouble());
-    ui->txtHeightMapGridZTop->setValue(list[3].toDouble());
-
-    m_settingsLoading = false;
-
-    updateHeightMapBorderDrawer();
-
-    m_heightMapModel.clear(); // To avoid probe data wipe message
-    updateHeightMapGrid();
-
-    list = textStream.readLine().split(";");
-
-    //    ui->chkHeightMapBorderAuto->setChecked(false);
-    //    ui->chkHeightMapBorderAuto->setEnabled(false);
-    //    ui->txtHeightMapBorderX->setEnabled(false);
-    //    ui->txtHeightMapBorderY->setEnabled(false);
-    //    ui->txtHeightMapBorderWidth->setEnabled(false);
-    //    ui->txtHeightMapBorderHeight->setEnabled(false);
-
-    //    ui->txtHeightMapGridX->setEnabled(false);
-    //    ui->txtHeightMapGridY->setEnabled(false);
-    //    ui->txtHeightMapGridZBottom->setEnabled(false);
-    //    ui->txtHeightMapGridZTop->setEnabled(false);
-
-    for (int i = 0; i < m_heightMapModel.rowCount(); i++)
-    {
-        QList<QString> row = textStream.readLine().split(";");
-        for (int j = 0; j < m_heightMapModel.columnCount(); j++)
-        {
-            m_heightMapModel.setData(m_heightMapModel.index(i, j), row[j].toDouble(), Qt::UserRole);
-        }
-    }
-
-    file.close();
-
-    ui->txtHeightMap->setText(fileName.mid(fileName.lastIndexOf("/") + 1));
-    m_heightMapFileName = fileName;
-    m_heightMapChanged = false;
-
-    ui->cboHeightMapInterpolationType->setCurrentIndex(list[0].toInt());
-    ui->txtHeightMapInterpolationStepX->setValue(list[1].toDouble());
-    ui->txtHeightMapInterpolationStepY->setValue(list[2].toDouble());
-
-    updateHeightMapInterpolationDrawer();
-}
-
-void frmMain::on_chkHeightMapInterpolationShow_toggled(bool checked)
-{
-    Q_UNUSED(checked)
-
-    updateControlsState();
-}
-
-void frmMain::on_cmdHeightMapLoad_clicked()
-{
-    if (!saveChanges(true))
-    {
-        return;
-    }
-
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open"), m_lastFolder, tr("Heightmap files (*.map)"));
-
-    if (fileName != "")
-    {
-        addRecentHeightmap(fileName);
-        loadHeightMap(fileName);
-
-        // If using heightmap
-        if (ui->chkHeightMapUse->isChecked() && !m_heightMapMode)
-        {
-            // Restore original file
-            on_chkHeightMapUse_clicked(false);
-            // Apply heightmap
-            on_chkHeightMapUse_clicked(true);
-        }
-
-        updateRecentFilesMenu();
-        updateControlsState(); // Enable 'cmdHeightMapMode' button
-    }
-}
-
-void frmMain::on_txtHeightMapInterpolationStepX_valueChanged(double arg1)
-{
-    Q_UNUSED(arg1)
-
-    updateHeightMapInterpolationDrawer();
-}
-
-void frmMain::on_txtHeightMapInterpolationStepY_valueChanged(double arg1)
-{
-    Q_UNUSED(arg1)
-
-    updateHeightMapInterpolationDrawer();
-}
-
-void frmMain::on_chkHeightMapUse_clicked(bool checked)
-{
-    //    static bool fileChanged;
-
-    // Reset table view
-    QByteArray headerState = ui->tblProgram->horizontalHeader()->saveState();
-    ui->tblProgram->setModel(NULL);
-
-    CancelException cancel;
-
-    if (checked)
-        try
-        {
-
-            // Prepare progress dialog
-            QProgressDialog progress(tr("Applying heightmap..."), tr("Abort"), 0, 0, this);
-            progress.setWindowModality(Qt::WindowModal);
-            progress.setFixedHeight(progress.sizeHint().height());
-            progress.show();
-            progress.setStyleSheet("QProgressBar {text-align: center; qproperty-format: \"\"}");
-
-            // Performance test
-            QElapsedTimer timer;
-
-            // Store fileChanged state
-            //        fileChanged = m_fileChanged;
-
-            // Set current model to prevent reseting heightmap cache
-            m_currentModel = &m_programHeightmapModel;
-
-            // Update heightmap-modificated program if not cached
-            if (m_programHeightmapModel.rowCount() == 0)
-            {
-
-                // Modifying linesegments
-                QList<LineSegment *> *list = m_viewParser.getLines();
-                QRectF borderRect = borderRectFromTextboxes();
-                double x, y, z;
-                QVector3D point;
-
-                progress.setLabelText(tr("Subdividing segments..."));
-                progress.setMaximum(list->count() - 1);
-                timer.start();
-
-                for (int i = 0; i < list->count(); i++)
-                {
-                    if (!list->at(i)->isZMovement())
-                    {
-                        QList<LineSegment *> subSegments = subdivideSegment(list->at(i));
-
-                        if (subSegments.count() > 0)
-                        {
-                            delete list->at(i);
-                            list->removeAt(i);
-                            foreach (LineSegment *subSegment, subSegments)
-                                list->insert(i++, subSegment);
-                            i--;
-                        }
-                    }
-
-                    if (progress.isVisible() && (i % PROGRESSSTEP == 0))
-                    {
-                        progress.setMaximum(list->count() - 1);
-                        progress.setValue(i);
-                        qApp->processEvents();
-                        if (progress.wasCanceled())
-                            throw cancel;
-                    }
-                }
-
-                qDebug() << "Subdivide time: " << timer.elapsed();
-
-                progress.setLabelText(tr("Updating Z-coordinates..."));
-                progress.setMaximum(list->count() - 1);
-                timer.start();
-
-                for (int i = 0; i < list->count(); i++)
-                {
-                    if (i == 0)
-                    {
-                        x = list->at(i)->getStart().x();
-                        y = list->at(i)->getStart().y();
-                        z = list->at(i)->getStart().z() + Interpolation::bicubicInterpolate(borderRect, &m_heightMapModel, x, y);
-                        list->at(i)->setStart(QVector3D(x, y, z));
-                    }
-                    else
-                        list->at(i)->setStart(list->at(i - 1)->getEnd());
-
-                    x = list->at(i)->getEnd().x();
-                    y = list->at(i)->getEnd().y();
-                    z = list->at(i)->getEnd().z() + Interpolation::bicubicInterpolate(borderRect, &m_heightMapModel, x, y);
-                    list->at(i)->setEnd(QVector3D(x, y, z));
-
-                    if (progress.isVisible() && (i % PROGRESSSTEP == 0))
-                    {
-                        progress.setValue(i);
-                        qApp->processEvents();
-                        if (progress.wasCanceled())
-                            throw cancel;
-                    }
-                }
-
-                qDebug() << "Z update time (interpolation): " << timer.elapsed();
-
-                progress.setLabelText(tr("Modifying G-code program..."));
-                progress.setMaximum(m_programModel.rowCount() - 2);
-                timer.start();
-
-                // Modifying g-code program
-                QString command;
-                QStringList args;
-                int line;
-                QString newCommand;
-                GCodeItem item;
-                int lastSegmentIndex = 0;
-                int lastCommandIndex = -1;
-
-                // Search strings
-                QString coords("XxYyZzIiJjKkRr");
-                QString g("Gg");
-                QString m("Mm");
-
-                char codeChar; // Single code char G1 -> G
-                float codeNum; // Code number      G1 -> 1
-
-                QString lastCode;
-                bool isLinearMove;
-                bool hasCommand;
-
-                m_programLoading = true;
-                for (int i = 0; i < m_programModel.rowCount() - 1; i++)
-                {
-                    command = m_programModel.data().at(i).command;
-                    line = m_programModel.data().at(i).line;
-                    isLinearMove = false;
-                    hasCommand = false;
-
-                    if (line < 0 || line == lastCommandIndex || lastSegmentIndex == list->count() - 1)
-                    {
-                        item.command = command;
-                        m_programHeightmapModel.data().append(item);
-                    }
-                    else
-                    {
-                        // Get commands args
-                        args = m_programModel.data().at(i).args;
-                        newCommand.clear();
-
-                        // Parse command args
-                        foreach (QString arg, args)
-                        {                                    // arg examples: G1, G2, M3, X100...
-                            codeChar = arg.at(0).toLatin1(); // codeChar: G, M, X...
-                            if (!coords.contains(codeChar))
-                            { // Not parameter
-                                codeNum = arg.mid(1).toDouble();
-                                if (g.contains(codeChar))
-                                { // 'G'-command
-                                    // Store 'G0' & 'G1'
-                                    if (codeNum == 0.0f || codeNum == 1.0f)
-                                    {
-                                        lastCode = arg;
-                                        isLinearMove = true; // Store linear move
-                                    }
-
-                                    // Replace 'G2' & 'G3' with 'G1'
-                                    if (codeNum == 2.0f || codeNum == 3.0f)
-                                    {
-                                        newCommand.append("G1");
-                                        isLinearMove = true;
-                                        // Drop plane command for arcs
-                                    }
-                                    else if (codeNum != 17.0f && codeNum != 18.0f && codeNum != 19.0f)
-                                    {
-                                        newCommand.append(arg);
-                                    }
-
-                                    hasCommand = true; // Command has 'G'
-                                }
-                                else
-                                {
-                                    if (m.contains(codeChar))
-                                        hasCommand = true;  // Command has 'M'
-                                    newCommand.append(arg); // Other commands
-                                }
-                            }
-                        }
-
-                        // Find first linesegment by command index
-                        for (int j = lastSegmentIndex; j < list->count(); j++)
-                        {
-                            if (list->at(j)->getLineNumber() == line)
-                            {
-                                if (!qIsNaN(list->at(j)->getEnd().length()) && (isLinearMove || (!hasCommand && !lastCode.isEmpty())))
-                                {
-                                    // Create new commands for each linesegment with given command index
-                                    while ((j < list->count()) && (list->at(j)->getLineNumber() == line))
-                                    {
-
-                                        point = list->at(j)->getEnd();
-                                        if (!list->at(j)->isAbsolute())
-                                            point -= list->at(j)->getStart();
-                                        if (!list->at(j)->isMetric())
-                                            point /= 25.4;
-
-                                        item.command = newCommand + QString("X%1Y%2Z%3")
-                                                                        .arg(point.x(), 0, 'f', 3)
-                                                                        .arg(point.y(), 0, 'f', 3)
-                                                                        .arg(point.z(), 0, 'f', 3);
-                                        m_programHeightmapModel.data().append(item);
-
-                                        if (!newCommand.isEmpty())
-                                            newCommand.clear();
-                                        j++;
-                                    }
-                                    // Copy original command if not G0 or G1
-                                }
-                                else
-                                {
-                                    item.command = command;
-                                    m_programHeightmapModel.data().append(item);
-                                }
-
-                                lastSegmentIndex = j;
-                                break;
-                            }
-                        }
-                    }
-                    lastCommandIndex = line;
-
-                    if (progress.isVisible() && (i % PROGRESSSTEP == 0))
-                    {
-                        progress.setValue(i);
-                        qApp->processEvents();
-                        if (progress.wasCanceled())
-                            throw cancel;
-                    }
-                }
-                m_programHeightmapModel.insertRow(m_programHeightmapModel.rowCount());
-            }
-            progress.close();
-
-            qDebug() << "Program modification time: " << timer.elapsed();
-
-            ui->tblProgram->setModel(&m_programHeightmapModel);
-            ui->tblProgram->horizontalHeader()->restoreState(headerState);
-
-            connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
-
-            m_programLoading = false;
-
-            // Update parser
-            m_currentDrawer = m_codeDrawer;
-            updateParser();
-
-            // Select first row
-            ui->tblProgram->selectRow(0);
-        }
-        catch (CancelException &e)
-        { // Cancel modification
-            m_programHeightmapModel.clear();
-            m_currentModel = &m_programModel;
-
-            ui->tblProgram->setModel(&m_programModel);
-            ui->tblProgram->horizontalHeader()->restoreState(headerState);
-
-            connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
-            ui->tblProgram->selectRow(0);
-
-            ui->chkHeightMapUse->setChecked(false);
-
-            return;
-        }
-    else
-    { // Restore original program
-        m_currentModel = &m_programModel;
-
-        ui->tblProgram->setModel(&m_programModel);
-        ui->tblProgram->horizontalHeader()->restoreState(headerState);
-
-        connect(ui->tblProgram->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(onTableCurrentChanged(QModelIndex, QModelIndex)));
-
-        // Store changes flag
-        bool fileChanged = m_fileChanged;
-
-        // Update parser
-        updateParser();
-
-        // Select first row
-        ui->tblProgram->selectRow(0);
-
-        // Restore changes flag
-        m_fileChanged = fileChanged;
-    }
-
-    // Update groupbox title
-    ui->grpHeightMap->setProperty("overrided", checked);
-    style()->unpolish(ui->grpHeightMap);
-    ui->grpHeightMap->ensurePolished();
-
-    // Update menu
-    ui->actFileSaveTransformedAs->setVisible(checked);
-}
-
-QList<LineSegment *> frmMain::subdivideSegment(LineSegment *segment)
-{
-    QList<LineSegment *> list;
-
-    QRectF borderRect = borderRectFromTextboxes();
-
-    double interpolationStepX = borderRect.width() / (ui->txtHeightMapInterpolationStepX->value() - 1);
-    double interpolationStepY = borderRect.height() / (ui->txtHeightMapInterpolationStepY->value() - 1);
-
-    double length;
-
-    QVector3D vec = segment->getEnd() - segment->getStart();
-
-    if (qIsNaN(vec.length()))
-        return QList<LineSegment *>();
-
-    if (fabs(vec.x()) / fabs(vec.y()) < interpolationStepX / interpolationStepY)
-        length = interpolationStepY / (vec.y() / vec.length());
-    else
-        length = interpolationStepX / (vec.x() / vec.length());
-
-    length = fabs(length);
-
-    if (qIsNaN(length))
-    {
-        qDebug() << "ERROR length:" << segment->getStart() << segment->getEnd();
-        return QList<LineSegment *>();
-    }
-
-    QVector3D seg = vec.normalized() * length;
-    int count = trunc(vec.length() / length);
-
-    if (count == 0)
-        return QList<LineSegment *>();
-
-    for (int i = 0; i < count; i++)
-    {
-        LineSegment *line = new LineSegment(segment);
-        line->setStart(i == 0 ? segment->getStart() : list[i - 1]->getEnd());
-        line->setEnd(line->getStart() + seg);
-        list.append(line);
-    }
-
-    if (list.count() > 0 && list.last()->getEnd() != segment->getEnd())
-    {
-        LineSegment *line = new LineSegment(segment);
-        line->setStart(list.last()->getEnd());
-        line->setEnd(segment->getEnd());
-        list.append(line);
-    }
-
-    return list;
-}
-
-void frmMain::on_cmdHeightMapCreate_clicked()
-{
-    ui->cmdHeightMapMode->setChecked(true);
-    on_actFileNew_triggered();
-}
-
-void frmMain::on_cmdHeightMapBorderAuto_clicked()
-{
-    QRectF rect = borderRectFromExtremes();
-
-    if (!qIsNaN(rect.width()) && !qIsNaN(rect.height()))
-    {
-        ui->txtHeightMapBorderX->setValue(rect.x());
-        ui->txtHeightMapBorderY->setValue(rect.y());
-        ui->txtHeightMapBorderWidth->setValue(rect.width());
-        ui->txtHeightMapBorderHeight->setValue(rect.height());
-    }
-}
-
 bool frmMain::compareCoordinates(double x, double y, double z)
 {
-    return m_machineDisplay->getPosition() == QVector3D(x,y,z);
+    return m_machineDisplay->getPosition() == QVector3D(x, y, z);
 }
 
 void frmMain::onCmdUserClicked(bool checked)
@@ -4307,7 +3165,7 @@ void frmMain::jogStep()
 }
 
 void frmMain::onJogVectorChanged()
-{    
+{
     jogStep();
 }
 

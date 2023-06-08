@@ -30,10 +30,10 @@ void SliderBox::createWidget()
     m_horizontalLayout->addWidget(m_checkbox);
 
     m_title = new QLabel("");
-    m_horizontalLayout->addWidget(m_title);
+    m_horizontalLayout->addWidget(m_title,1);
 
     m_txtValue = new QSpinBox();
-    m_horizontalLayout->addWidget(m_txtValue, 1);
+    m_horizontalLayout->addWidget(m_txtValue, 2);
 
     m_slider = new Slider();
     m_slider->setOrientation(Qt::Horizontal);
