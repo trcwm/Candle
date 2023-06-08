@@ -2,6 +2,8 @@ CandleM
 -----------
 GRBL controller application with G-Code visualizer written in Qt.
 
+![CandleM screenshot](screenshots/CandleM_v1.3.png?raw=true "CandleM screenshot")
+
 Supported functions:
 * Controlling GRBL-based cnc-machine via console commands, buttons on form, numpad.
 * Monitoring cnc-machine state.
@@ -28,6 +30,5 @@ Before creating new issue:
 ------
 CandleM works with CNC controlled by GRBL firmware, many problems can be solved by using proper version of GRBL, using proper configuration.
 
-Please read GRBL wiki: 
-- GRBL v0.9-: https://github.com/grbl/grbl/wiki
+Please read GRBL wiki:
 - GRBL v1.1: https://github.com/gnea/grbl/wiki
