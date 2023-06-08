@@ -17,38 +17,24 @@ void JogWidget::createWidget()
     m_layout = new QGridLayout();
 
     m_upX = new StyledToolButton();
-    m_upX->setMinimumSize(36,36);
-    m_upX->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_upX->setIcon(QIcon(":/images/1401562173_chevron-right.png"));
 
     m_downX = new StyledToolButton();
-    m_downX->setMinimumSize(36,36);
-    m_downX->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_downX->setIcon(QIcon(":/images/1401561986_chevron-left.png"));
 
     m_upY = new StyledToolButton();
-    m_upY->setMinimumSize(36,36);
-    m_upY->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_upY->setIcon(QIcon(":/images/1401562173_chevron-up.png"));
 
     m_downY = new StyledToolButton();
-    m_downY->setMinimumSize(36,36);
-    m_downY->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_downY->setIcon(QIcon(":/images/1401562173_chevron-down.png"));
 
     m_upZ = new StyledToolButton();
-    m_upZ->setMinimumSize(36,36);
-    m_upZ->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_upZ->setIcon(QIcon(":/images/1401562699_icon-arrow-up-b.png"));
 
     m_downZ = new StyledToolButton();
-    m_downZ->setMinimumSize(36,36);
-    m_downZ->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_downZ->setIcon(QIcon(":/images/1401562699_icon-arrow-down-b.png"));
 
     m_stop = new StyledToolButton();
-    m_stop->setMinimumSize(36,36);
-    m_stop->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_stop->setIcon(QIcon(":/images/brake.png"));
 
     m_jogStep = new ComboBoxKey();
@@ -60,7 +46,7 @@ void JogWidget::createWidget()
     m_layout->addWidget(m_downX, 1, 0);
     m_layout->addWidget(m_stop, 1, 1);
 
-    m_layout->addItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1,3);
+    m_layout->addItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum), 1,3);
 
     m_layout->addWidget(m_upZ, 0, 4);
     m_layout->addWidget(m_downZ, 2, 4);

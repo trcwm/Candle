@@ -169,9 +169,16 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
     m_consoleTab = new GUI::ConsoleTab();
     connect(m_consoleTab, &GUI::ConsoleTab::returnPressed, this, &frmMain::onCboCommandReturnPressed);
 
+    auto grpJogControl = new QGroupBox("Control");
+    auto grpJogControlLayout = new QVBoxLayout();
+
     m_jogWidget = new GUI::JogWidget();
+    m_jogWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
     connect(m_jogWidget, &GUI::JogWidget::jogVectorChanged, this, &frmMain::onJogVectorChanged);
     connect(m_jogWidget, &GUI::JogWidget::stopClicked, this, &frmMain::onJogStopClicked);
+
+    grpJogControlLayout->addWidget(m_jogWidget);
+    grpJogControl->setLayout(grpJogControlLayout);
 
     m_buttonBar = new GUI::ButtonBar();
     addToolBar(m_buttonBar);
@@ -235,23 +242,42 @@ frmMain::frmMain(QWidget *parent) : QMainWindow(parent),
         loadFile(qApp->arguments().last());
     }
 
-    auto *displayBoxLayout = new QVBoxLayout();
+    auto *rightLayout = new QVBoxLayout();
+
+    // status group box consisting of
+    // machine display, work display and status widget.
+    auto statusGrpBox = new QGroupBox("Status");
+    auto *statusBoxLayout = new QVBoxLayout();
     m_machineDisplay = new GUI::PositionDisplay(tr("Machine"));
+    m_machineDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     m_workDisplay = new GUI::PositionDisplay(tr("Work"));
+    m_workDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    displayBoxLayout->addWidget(m_jogWidget);
-    displayBoxLayout->addWidget(m_workDisplay);
-    displayBoxLayout->addWidget(m_machineDisplay);
-    displayBoxLayout->addWidget(m_statusWidget);
+    m_statusWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
+    statusBoxLayout->addWidget(m_workDisplay);
+    statusBoxLayout->addWidget(m_machineDisplay);
+    statusBoxLayout->addWidget(m_statusWidget);
+
+    statusGrpBox->setLayout(statusBoxLayout);
+    statusGrpBox->setContentsMargins({0,0,0,0});
+    statusBoxLayout->setContentsMargins({0,0,0,0});
+    statusBoxLayout->setSpacing(0);
+
+    statusGrpBox->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+    // tab widget for console, override and spindle tabs
     m_tabWidget = new QTabWidget();
+    m_tabWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Expanding);
     m_tabWidget->addTab(m_consoleTab, tr("Console"));
     m_tabWidget->addTab(m_overrideTab, tr("Override"));
     m_tabWidget->addTab(m_spindleTab, tr("Spindle"));
 
-    displayBoxLayout->addWidget(m_tabWidget);
+    rightLayout->addWidget(grpJogControl);
+    rightLayout->addWidget(statusGrpBox);
+    rightLayout->addWidget(m_tabWidget);
 
-    ui->verticalLayout_2->addLayout(displayBoxLayout);
+    ui->verticalLayout_2->addLayout(rightLayout);
 }
 
 frmMain::~frmMain()

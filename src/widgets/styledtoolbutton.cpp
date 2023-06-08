@@ -36,7 +36,6 @@ void StyledToolButton::leaveEvent(QEvent *e)
 void StyledToolButton::setText(const QString &txt)
 {
     QAbstractButton::setText(txt);
-
     setMinimumSize(calcMinimumSize());
 }
 
@@ -63,6 +62,7 @@ QSize StyledToolButton::calcMinimumSize() const
     {
         // button has icon only
         recommendedSize = icon().actualSize(iconSize());        
+        recommendedSize = recommendedSize * 2;
     }
 
     recommendedSize += QSize{m_borderWidth*2, m_borderWidth*2};

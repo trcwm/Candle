@@ -1,6 +1,7 @@
 #pragma once
 #include <QWidget>
 #include <QLabel>
+#include <QLineEdit>
 #include <QBoxLayout>
 #include <QString>
 #include <QVector3D>
@@ -35,7 +36,7 @@ protected:
 
     QVector3D m_pos;
 
-    QLabel *m_name = nullptr;
+    QLabel    *m_name = nullptr;
     QLabel *m_x = nullptr;
     QLabel *m_y = nullptr;
     QLabel *m_z = nullptr;

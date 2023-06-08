@@ -24,14 +24,10 @@
 #include "drawers/origindrawer.h"
 #include "drawers/gcodedrawer.h"
 #include "drawers/tooldrawer.h"
-//#include "drawers/heightmapborderdrawer.h"
-//#include "drawers/heightmapgriddrawer.h"
-//#include "drawers/heightmapinterpolationdrawer.h"
 #include "drawers/shaderdrawable.h"
 #include "drawers/selectiondrawer.h"
 
 #include "tables/gcodetablemodel.h"
-//#include "tables/heightmaptablemodel.h"
 
 #include "utils/interpolation.h"
 
@@ -42,7 +38,6 @@
 #include "widgets/consoletab.h"
 #include "widgets/overridetab.h"
 #include "widgets/spindletab.h"
-//#include "widgets/heightmaptab.h"
 #include "widgets/jogwidget.h"
 #include "widgets/buttonbar.h"
 
