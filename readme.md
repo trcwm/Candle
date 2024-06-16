@@ -24,7 +24,8 @@ System requirements for running "CandleM":
 
 Build requirements:
 ------------------
-Qt 5.12.2 with MinGW/GCC compiler
+* Qt 5.12.2 with MinGW/GCC compiler
+* libqt5serialport5-dev
 
 Before creating new issue:
 ------
